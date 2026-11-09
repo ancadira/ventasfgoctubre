@@ -1,0 +1,1635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Family Grill · Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --bg:#f7f8fa;--surface:#ffffff;--surface2:#f1f3f6;--surface3:#e8ebf0;
+  --border:#e2e6ed;--border2:#cdd3dc;
+  --text:#1a1d23;--text2:#4a5568;--text3:#8a9ab0;
+  --green:#0a7c52;--green2:#0a7c52;--green-dim:#e6f4ef;
+  --purple:#6d28d9;--purple-dim:#ede9fe;
+  --amber:#92400e;--amber-dim:#fef3c7;
+  --blue:#1d4ed8;--blue-dim:#eff6ff;
+  --red:#991b1b;--red-dim:#fef2f2;
+  --teal:#0f766e;
+  --r:8px;--r2:12px;--r3:16px;
+  font-size:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;min-height:100vh;overflow-x:hidden}
+code,mono{font-family:'DM Mono',monospace}
+
+/* ── LAYOUT ── */
+.shell{display:flex;flex-direction:column;min-height:100vh}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:56px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:100}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-dot{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px #0a7c5260}
+.brand-name{font-size:15px;font-weight:600;letter-spacing:-.01em}
+.brand-sub{font-size:11px;color:var(--text3);font-weight:400;margin-left:2px}
+.topbar-right{display:flex;align-items:center;gap:8px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);transition:all .15s;font-family:'DM Sans',sans-serif;white-space:nowrap}
+.btn:hover{background:var(--surface3);color:var(--text);border-color:var(--border2)}
+.btn-green{background:var(--green-dim);border-color:var(--green2);color:var(--green)}
+.btn-green:hover{background:#d1ede5;color:var(--green)}
+.btn-purple{background:var(--purple-dim);border-color:#7c6cd1;color:var(--purple)}
+.btn-purple:hover{background:#a78bfa25;color:var(--purple)}
+svg.icon{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+
+/* ── TABS ── */
+.nav{display:flex;align-items:center;gap:2px;padding:0 24px;height:44px;border-bottom:1px solid var(--border);background:var(--surface);overflow-x:auto}
+.nav::-webkit-scrollbar{display:none}
+.nav-tab{padding:6px 16px;border-radius:var(--r);font-size:12px;font-weight:500;cursor:pointer;color:var(--text3);background:transparent;border:none;transition:all .15s;white-space:nowrap;font-family:'DM Sans',sans-serif}
+.nav-tab:hover{color:var(--text2);background:var(--surface2)}
+.nav-tab.active{color:var(--green);background:var(--green-dim);border:1px solid #0a7c5230}
+.nav-sep{width:1px;height:16px;background:var(--border);margin:0 6px;flex-shrink:0}
+
+/* ── MAIN ── */
+.main{flex:1;padding:24px;max-width:1400px;margin:0 auto;width:100%}
+.page{display:none}.page.active{display:block}
+
+/* ── KPI STRIP ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:20px}
+@media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+.kpi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:14px 16px;position:relative;overflow:hidden}
+.kpi-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--accent-dim,transparent) 0%,transparent 60%);pointer-events:none}
+.kpi-label{font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.kpi-val{font-size:22px;font-weight:600;letter-spacing:-.03em;color:var(--text)}
+.kpi-sub{font-size:10px;color:var(--text3);margin-top:4px}
+.kpi-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:500;padding:2px 7px;border-radius:20px;margin-top:5px}
+.badge-up{background:var(--green-dim);color:var(--green)}
+.badge-dn{background:var(--red-dim);color:var(--red)}
+
+/* ── CHARTS GRID ── */
+.charts-grid{display:grid;gap:12px;grid-template-columns:1fr 1fr;margin-bottom:12px}
+.charts-grid.triple{grid-template-columns:2fr 1fr}
+.charts-grid.single{grid-template-columns:1fr}
+@media(max-width:800px){.charts-grid,.charts-grid.triple{grid-template-columns:1fr}}
+.chart-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r2);padding:18px 20px}
+.chart-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.chart-title{font-size:12px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.06em}
+.chart-legend{display:flex;gap:12px;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:10px;color:var(--text3)}
+.legend-dot{width:8px;height:8px;border-radius:2px;flex-shrink:0}
+canvas{display:block}
+
+/* ── FILTER BAR ── */
+.filter-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:18px;padding:12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r2)}
+.filter-label{font-size:11px;color:var(--text3);white-space:nowrap}
+select{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-size:12px;padding:5px 10px;font-family:'DM Sans',sans-serif;cursor:pointer;outline:none;height:30px}
+select:focus{border-color:var(--green2)}
+.filter-sep{width:1px;height:20px;background:var(--border);margin:0 4px}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--text3);transition:all .15s}
+.chip.on{background:var(--green-dim);border-color:var(--green2);color:var(--green)}
+
+/* ── TABLE PAGE ── */
+.table-wrap{overflow-x:auto;border-radius:var(--r2);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead th{background:var(--surface2);color:var(--text3);font-weight:500;padding:10px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border);white-space:nowrap}
+thead th.num{text-align:right}
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--surface2)}
+tbody td{padding:8px 12px;color:var(--text);vertical-align:middle}
+tbody td.num{text-align:right;font-family:'DM Mono',monospace;font-size:11px;color:var(--text2)}
+tbody td.day{color:var(--text3);font-size:11px}
+tr.total-row td{background:var(--green-dim);font-weight:600;color:var(--green);border-top:1px solid var(--border2)}
+tr.total-row td.num{color:var(--green)}
+.pill{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:500}
+.pill-green{background:var(--green-dim);color:var(--green)}
+.pill-blue{background:var(--blue-dim);color:var(--blue)}
+.pill-amber{background:var(--amber-dim);color:var(--amber)}
+
+/* ── COMPARE PAGE ── */
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+@media(max-width:800px){.compare-grid{grid-template-columns:1fr}}
+.month-selector{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.month-chip{padding:6px 16px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--text3);transition:all .15s}
+.month-chip.sel{color:#fff;font-weight:600}
+.mc-0.sel{background:#0a7c52;border-color:#0a7c52}
+.mc-1.sel{background:#6d28d9;border-color:#6d28d9}
+.mc-2.sel{background:#92400e;border-color:#b45309}
+.mc-3.sel{background:#1d4ed8;border-color:#1d4ed8}
+.mc-4.sel{background:#991b1b;border-color:#dc2626}
+
+/* ── IMPORT MODAL ── */
+.modal-bg{position:fixed;inset:0;background:#00000090;z-index:200;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:var(--r3);padding:28px;width:480px;max-width:95vw}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:8px}
+.modal-sub{font-size:12px;color:var(--text3);margin-bottom:20px;line-height:1.6}
+.drop-zone{border:2px dashed var(--border2);border-radius:var(--r2);padding:32px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:16px}
+.drop-zone:hover,.drop-zone.over{border-color:var(--green2);background:var(--green-dim)}
+.drop-zone p{font-size:12px;color:var(--text3);margin-top:8px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end}
+textarea.json-input{width:100%;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:'DM Mono',monospace;font-size:11px;padding:10px;resize:vertical;min-height:80px;margin-bottom:12px;outline:none}
+textarea.json-input:focus{border-color:var(--green2)}
+.msg{font-size:11px;padding:8px 12px;border-radius:var(--r);margin-bottom:12px}
+.msg-ok{background:var(--green-dim);color:var(--green);border:1px solid #0a7c5250}
+.msg-err{background:var(--red-dim);color:var(--red);border:1px solid #dc262640}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:60px 20px;color:var(--text3)}
+.empty .ico{font-size:40px;margin-bottom:16px;opacity:.4}
+.empty h3{font-size:15px;font-weight:500;color:var(--text2);margin-bottom:8px}
+.empty p{font-size:12px;line-height:1.7}
+
+/* ── BAR ROWS (top productos) ── */
+.bar-rows{display:flex;flex-direction:column;gap:7px;margin-top:4px}
+.bar-row{display:flex;align-items:center;gap:10px}
+.bar-lbl{font-size:11px;color:var(--text2);min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bar-track{width:120px;height:6px;background:var(--surface3);border-radius:3px;overflow:hidden;flex-shrink:0}
+.bar-fill{height:100%;border-radius:3px;background:var(--green)}
+.bar-val{font-size:10px;color:var(--text3);min-width:50px;text-align:right;font-family:'DM Mono',monospace;flex-shrink:0}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--surface)}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-dot"></div>
+    <span class="brand-name">Family Grill</span>
+    <span class="brand-sub">Analytics</span>
+  </div>
+  <div class="topbar-right">
+    <button class="btn btn-purple" onclick="openImport()">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Importar datos
+    </button>
+    <button class="btn btn-green" onclick="exportData()">
+      <svg class="icon" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Exportar JSON
+    </button>
+  </div>
+</header>
+
+<!-- NAV TABS -->
+<nav class="nav">
+  <button class="nav-tab active" onclick="goPage('graficas')">Gráficas</button>
+  <button class="nav-tab" onclick="goPage('tabla')">Tabla diaria</button>
+  <div class="nav-sep"></div>
+  <button class="nav-tab" onclick="goPage('comparar')">Comparar meses</button>
+  <button class="nav-tab" onclick="goPage('postres')">Postres</button>
+  <button class="nav-tab" onclick="goPage('bebidas')">Bebidas</button>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- ═══════════════════════════════ PAGE: GRÁFICAS ═══════════════════════════════ -->
+  <div class="page active" id="page-graficas">
+
+    <div class="filter-bar">
+      <span class="filter-label">Período</span>
+      <select id="selMes" onchange="applyFilters()"></select>
+      <div class="filter-sep"></div>
+      <span class="filter-label">Día semana</span>
+      <select id="selDia" onchange="applyFilters()">
+        <option value="todos">Todos</option>
+        <option>Lunes</option><option>Martes</option><option>Miércoles</option>
+        <option>Jueves</option><option>Viernes</option><option>Sábado</option><option>Domingo</option>
+      </select>
+      <div class="filter-sep"></div>
+      <span id="period-label" style="font-size:11px;color:var(--text3);margin-left:4px"></span>
+    </div>
+
+    <!-- KPIs -->
+    <div class="kpi-grid" id="kpis"></div>
+
+    <!-- Fila 1: Ventas por día + Medios de pago -->
+    <div class="charts-grid triple" style="margin-bottom:12px">
+      <div class="chart-card">
+        <div class="chart-head">
+          <span class="chart-title">Ventas por día</span>
+          <div class="chart-legend">
+            <span class="legend-item"><span class="legend-dot" style="background:#0a7c52"></span>Venta neta</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#8b5cf6"></span>Impoconsumo</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span>Propina</span>
+          </div>
+        </div>
+        <div style="position:relative;height:200px"><canvas id="c-daily"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-head"><span class="chart-title">Medios de pago</span></div>
+        <div style="position:relative;height:160px"><canvas id="c-mp-donut"></canvas></div>
+        <div id="mp-legend" style="margin-top:10px"></div>
+      </div>
+    </div>
+
+    <!-- Fila 2: Tendencia total -->
+    <div class="charts-grid single" style="margin-bottom:12px">
+      <div class="chart-card">
+        <div class="chart-head">
+          <span class="chart-title">Tendencia — total diario</span>
+          <div class="chart-legend">
+            <span class="legend-item"><span class="legend-dot" style="background:#1d4ed8"></span>Total cobrado al cliente</span>
+          </div>
+        </div>
+        <div style="position:relative;height:140px"><canvas id="c-trend"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Fila 3: Franja horaria + Grupos -->
+    <div class="charts-grid" style="margin-bottom:12px">
+      <div class="chart-card">
+        <div class="chart-head"><span class="chart-title">Ventas por franja horaria</span></div>
+        <div style="position:relative;height:200px"><canvas id="c-hora"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-head"><span class="chart-title">Grupos de producto</span></div>
+        <div id="c-grupos-wrap" style="position:relative"><canvas id="c-grupos"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Fila 4: Medios por día + Top productos -->
+    <div class="charts-grid" style="margin-bottom:12px">
+      <div class="chart-card">
+        <div class="chart-head">
+          <span class="chart-title">Recaudo por canal / día</span>
+          <div class="chart-legend">
+            <span class="legend-item"><span class="legend-dot" style="background:#1d4ed8"></span>Datafono</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#0a7c52"></span>Efectivo</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#d97706"></span>QR</span>
+          </div>
+        </div>
+        <div style="position:relative;height:200px"><canvas id="c-mp-day"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-head"><span class="chart-title">Top 15 productos</span></div>
+        <div class="bar-rows" id="top-prod-bars"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════ PAGE: TABLA ═══════════════════════════════ -->
+  <div class="page" id="page-tabla">
+    <div class="filter-bar" style="margin-bottom:18px">
+      <span class="filter-label">Período</span>
+      <select id="t-selMes" onchange="applyFilters()"></select>
+      <div class="filter-sep"></div>
+      <select id="t-selDia" onchange="applyFilters()">
+        <option value="todos">Todos</option>
+        <option>Lunes</option><option>Martes</option><option>Miércoles</option>
+        <option>Jueves</option><option>Viernes</option><option>Sábado</option><option>Domingo</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Fecha</th><th>Día</th><th class="num">Facturas</th>
+            <th class="num">Venta neta</th><th class="num">Impoconsumo</th>
+            <th class="num">Propina</th><th class="num">Descuento</th>
+            <th class="num">Total</th>
+            <th class="num">Efectivo</th><th class="num">Datafono</th><th class="num">QR</th>
+            <th class="num">Ticket prom.</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════ PAGE: COMPARAR ═══════════════════════════════ -->
+  <div class="page" id="page-comparar">
+    <div class="filter-bar" style="margin-bottom:14px">
+      <span class="filter-label">Seleccionar meses a comparar (máx 5)</span>
+    </div>
+    <div class="month-selector" id="month-chips"></div>
+
+    <div class="kpi-grid" id="cmp-kpis" style="margin-bottom:20px"></div>
+
+    <div class="compare-grid" style="margin-bottom:12px">
+      <div class="chart-card">
+        <div class="chart-head"><span class="chart-title">Total mensual</span></div>
+        <div style="position:relative;height:220px"><canvas id="c-cmp-total"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-head"><span class="chart-title">Facturas &amp; ticket promedio</span></div>
+        <div style="position:relative;height:220px"><canvas id="c-cmp-ticket"></canvas></div>
+      </div>
+    </div>
+
+    <div class="compare-grid" style="margin-bottom:12px">
+      <div class="chart-card">
+        <div class="chart-head">
+          <span class="chart-title">Composición ventas</span>
+          <div class="chart-legend">
+            <span class="legend-item"><span class="legend-dot" style="background:#0a7c52"></span>Venta neta</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#7c3aed"></span>Impoconsumo</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#d97706"></span>Propina</span>
+          </div>
+        </div>
+        <div style="position:relative;height:220px"><canvas id="c-cmp-comp"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-head">
+          <span class="chart-title">Medios de pago</span>
+          <div class="chart-legend">
+            <span class="legend-item"><span class="legend-dot" style="background:#1d4ed8"></span>Datafono</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#0a7c52"></span>Efectivo</span>
+            <span class="legend-item"><span class="legend-dot" style="background:#d97706"></span>QR</span>
+          </div>
+        </div>
+        <div style="position:relative;height:220px"><canvas id="c-cmp-mp"></canvas></div>
+      </div>
+    </div>
+
+    <div class="chart-card" style="margin-bottom:12px">
+      <div class="chart-head"><span class="chart-title">Ventas promedio por día de la semana — comparativo</span></div>
+      <div style="position:relative;height:220px"><canvas id="c-cmp-dow"></canvas></div>
+    </div>
+
+    <div class="chart-card" style="margin-bottom:12px">
+      <div class="chart-head">
+        <span class="chart-title">Top 15 productos — comparativo por mes</span>
+        <div class="chart-legend" id="cmp-prod-legend"></div>
+      </div>
+      <div id="cmp-prod-table" style="overflow-x:auto"></div>
+    </div>
+
+  </div>
+
+
+  <!-- ═══════════════════════════════ PAGE: POSTRES ═══════════════════════════════ -->
+  <div class="page" id="page-postres">
+    <div class="filter-bar" style="margin-bottom:18px">
+      <span class="filter-label">Período</span>
+      <select id="p-selMes" onchange="postresSel=this.value;renderPostres()"></select>
+      <div class="filter-sep"></div>
+      <span class="filter-label">Ordenar por</span>
+      <span class="chip on" id="p-m-uds" onclick="setPostresMetric('uds')">Unidades</span>
+      <span class="chip" id="p-m-val" onclick="setPostresMetric('val')">Venta $</span>
+    </div>
+    <div class="kpi-grid" id="p-kpis" style="grid-template-columns:repeat(4,1fr)"></div>
+    <div class="charts-grid" style="margin-bottom:12px">
+      <div class="chart-card">
+        <div class="chart-head"><span class="chart-title" id="p-rank-title">Postres más vendidos</span></div>
+        <div id="c-postres-wrap" style="position:relative"><canvas id="c-postres"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-head"><span class="chart-title">Postres por mes · venta y % de la venta total</span></div>
+        <div style="position:relative;height:300px"><canvas id="c-postres-mes"></canvas></div>
+      </div>
+    </div>
+    <div class="chart-head" style="margin:18px 0 8px"><span class="chart-title">Unidades por postre y mes (todos los meses cargados)</span></div>
+    <div class="table-wrap"><table id="p-table"></table></div>
+  </div>
+
+
+  <!-- ═══════════════════════════════ PAGE: BEBIDAS ═══════════════════════════════ -->
+  <div class="page" id="page-bebidas">
+    <div class="filter-bar" style="margin-bottom:18px">
+      <span class="filter-label">Período</span>
+      <select id="b-selMes" onchange="bebidasSel=this.value;renderBebidas()"></select>
+      <div class="filter-sep"></div>
+      <span class="filter-label">Grupo</span>
+      <select id="b-selGrupo" onchange="bebidasGrupo=this.value;renderBebidas()"></select>
+      <div class="filter-sep"></div>
+      <span class="filter-label">Ordenar por</span>
+      <span class="chip on" id="b-m-uds" onclick="setBebidasMetric('uds')">Unidades</span>
+      <span class="chip" id="b-m-val" onclick="setBebidasMetric('val')">Venta $</span>
+    </div>
+    <div class="kpi-grid" id="b-kpis" style="grid-template-columns:repeat(4,1fr)"></div>
+    <div class="charts-grid" style="margin-bottom:12px">
+      <div class="chart-card">
+        <div class="chart-head"><span class="chart-title" id="b-rank-title">Bebidas más vendidas</span></div>
+        <div id="c-bebidas-wrap" style="position:relative"><canvas id="c-bebidas"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-head"><span class="chart-title">Bebidas por mes · venta y % de la venta total</span></div>
+        <div style="position:relative;height:300px"><canvas id="c-bebidas-mes"></canvas></div>
+      </div>
+    </div>
+    <div class="chart-head" style="margin:18px 0 8px"><span class="chart-title">Unidades por bebida y mes (todos los meses cargados)</span></div>
+    <div class="table-wrap"><table id="b-table"></table></div>
+  </div>
+
+</main>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal-bg" id="import-modal">
+  <div class="modal">
+    <div class="modal-title">Importar datos</div>
+    <div class="modal-sub">Pega el JSON exportado desde este mismo dashboard, o arrastra el archivo .json aquí.</div>
+    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+      <svg style="width:32px;height:32px;stroke:var(--text3);fill:none;stroke-width:1.5;margin:0 auto;display:block" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      <p>Haz clic o arrastra un archivo .json</p>
+      <input type="file" id="file-input" accept=".json" style="display:none" onchange="handleFile(this)">
+    </div>
+    <div style="margin-bottom:10px;font-size:11px;color:var(--text3);text-align:center">— o pega el JSON directamente —</div>
+    <textarea class="json-input" id="json-paste" placeholder='{"meses":[...]}'></textarea>
+    <div id="import-msg"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeImport()">Cancelar</button>
+      <button class="btn btn-green" onclick="doImport()">Importar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// DATA STORE
+// Formato: { meses: [ { ano, mes, label, dias:[], grupos:[], productos:[], horas:[] } ] }
+// ─────────────────────────────────────────────────────────────────────────────
+const PALETTE = ['#00e5a0','#a78bfa','#f59e0b','#60a5fa','#f87171','#2dd4bf','#fb923c'];
+const MESES_ES = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+// ── DATOS NOVIEMBRE 2025 (fuente: DIAN — VN+IMP+PROP-DESC=RECIBIDO ✓) ──
+const novDias = [
+  {f:'15/11/2025',d:'Sábado',   fact:14,bruto:2477770, iva:198222, prop:182564,desc:206000,tot:2652556,ef:943660, dat:943660, qr:25772},
+  {f:'16/11/2025',d:'Domingo',  fact:26,bruto:3775914, iva:302073, prop:337513,desc:22200, tot:4393300,ef:653932, dat:3122066,qr:617303},
+  {f:'17/11/2025',d:'Lunes',    fact:27,bruto:3133602, iva:250688, prop:304310,desc:40400, tot:3648200,ef:813280, dat:1619392,qr:1215528},
+  {f:'18/11/2025',d:'Martes',   fact:15,bruto:1303606, iva:104289, prop:118105,desc:16300, tot:1509700,ef:123208, dat:1161415,qr:225077},
+  {f:'19/11/2025',d:'Miércoles',fact:17,bruto:1908049, iva:152644, prop:182507,desc:0,     tot:2243200,ef:1148215,dat:930721, qr:164264},
+  {f:'20/11/2025',d:'Jueves',   fact:35,bruto:4149892, iva:331991, prop:290416,desc:29600, tot:4742700,ef:1705396,dat:1498414,qr:1538890},
+  {f:'21/11/2025',d:'Viernes',  fact:40,bruto:4948503, iva:395880, prop:425917,desc:9900,  tot:5760400,ef:1652650,dat:3628543,qr:479207},
+  {f:'22/11/2025',d:'Sábado',   fact:32,bruto:5166746, iva:413340, prop:357014,desc:105700,tot:5831400,ef:1628530,dat:4202870,qr:0},
+  {f:'23/11/2025',d:'Domingo',  fact:34,bruto:4863972, iva:389118, prop:429711,desc:9700,  tot:5673100,ef:1615609,dat:3474316,qr:583175},
+  {f:'24/11/2025',d:'Lunes',    fact:8, bruto:1202775, iva:96222,  prop:111703,desc:0,     tot:1410700,ef:590127, dat:820573, qr:0},
+  {f:'25/11/2025',d:'Martes',   fact:20,bruto:2993324, iva:239466, prop:276110,desc:54400, tot:3454500,ef:833135, dat:1973308,qr:648057},
+  {f:'26/11/2025',d:'Miércoles',fact:14,bruto:976386,  iva:78111,  prop:84304, desc:13600, tot:1125200,ef:107238, dat:988298, qr:29664},
+  {f:'27/11/2025',d:'Jueves',   fact:25,bruto:3903507, iva:312281, prop:283512,desc:50000, tot:4449300,ef:1949194,dat:1912941,qr:587164},
+  {f:'28/11/2025',d:'Viernes',  fact:21,bruto:2602399, iva:208192, prop:239809,desc:0,     tot:3050400,ef:1036263,dat:1974197,qr:39940},
+  {f:'29/11/2025',d:'Sábado',   fact:40,bruto:5315170, iva:425214, prop:314016,desc:76300, tot:5978100,ef:1759095,dat:3925953,qr:293052},
+  {f:'30/11/2025',d:'Domingo',  fact:18,bruto:2514900, iva:201192, prop:222707,desc:14700, tot:2924100,ef:661666, dat:2233581,qr:28852},
+];
+const novGrupos=[['Platos Fuertes',20328700],['Comida Urbana',9001900],['Bebidas',5483700],['Menú Infantil',3898000],['Sodificadas',3727600],['Entradas',3589500],['Compartir',2489300],['Cócteles',2084000],['Cervezas',1783100],['Sorbetes',1385400],['Postres',1132400]];
+const novProds=[['Family Burguer',95,3315500],['Bife Chorizo',55,3296400],['Bife Paleta',48,2877400],['Mega Family',67,2874300],['Chicken Tenders y Smiles',98,2629000],['Family Burguer + Papas',69,2474100],['Parrillada Mar y Tierra',14,2039300],['Bife Bondiola',51,1917900],['Churrasco de Pollo',51,1868400],['Arroz Putiao',43,1859600],['Porcheta Hawaiana',43,1765500],['Sodificada Maracuyá',139,1745800],['Encocado Pollo Cremoso',36,1262000],['Brochetas Langostino',42,1218000],['Golden Smoke',32,1216000]];
+const novHoras=[[12,150400],[13,2838400],[14,6320600],[15,5345500],[16,4680300],[17,2498200],[18,3377300],[19,6961100],[20,5744900],[21,4775100],[22,8359500],[23,4284300]];
+
+// ── DATOS DICIEMBRE 2025 (fuente: DIAN — VN+IMP+PROP-DESC=RECIBIDO ✓) ──
+const dicDias = [
+  {f:'01/12/2025',d:'Lunes',    fact:7, bruto:1078978,  iva:86318,  prop:93304,  desc:0,     tot:1258600, ef:587771,  dat:670829,  qr:0},
+  {f:'02/12/2025',d:'Martes',   fact:16,bruto:2428140,  iva:194251, prop:148309, desc:48800,  tot:2721900, ef:659716,  dat:1286322, qr:775862},
+  {f:'03/12/2025',d:'Miércoles',fact:20,bruto:3719526,  iva:297562, prop:365312, desc:80200,  tot:4302200, ef:1023018, dat:2833271, qr:445911},
+  {f:'04/12/2025',d:'Jueves',   fact:16,bruto:1750921,  iva:140074, prop:140605, desc:0,      tot:2031600, ef:982817,  dat:1013436, qr:35346},
+  {f:'05/12/2025',d:'Viernes',  fact:19,bruto:1991476,  iva:159318, prop:147106, desc:0,      tot:2297900, ef:492316,  dat:1805584, qr:0},
+  {f:'06/12/2025',d:'Sábado',   fact:22,bruto:3461195,  iva:276896, prop:261260, desc:102800, tot:3896550, ef:1377828, dat:2195894, qr:322828},
+  {f:'07/12/2025',d:'Domingo',  fact:26,bruto:3902026,  iva:312162, prop:335712, desc:14100,  tot:4535800, ef:723175,  dat:3354977, qr:457648},
+  {f:'08/12/2025',d:'Lunes',    fact:30,bruto:4073414,  iva:325873, prop:311313, desc:0,      tot:4710600, ef:1360456, dat:3283222, qr:66923},
+  {f:'09/12/2025',d:'Martes',   fact:13,bruto:1693237,  iva:135459, prop:158104, desc:39100,  tot:1947700, ef:644423,  dat:1071624, qr:231653},
+  {f:'10/12/2025',d:'Miércoles',fact:14,bruto:1377218,  iva:110177, prop:110205, desc:19600,  tot:1578000, ef:260666,  dat:1038314, qr:279020},
+  {f:'11/12/2025',d:'Jueves',   fact:9, bruto:1421755,  iva:113740, prop:141805, desc:0,      tot:1677300, ef:68599,   dat:1552117, qr:56584},
+  {f:'12/12/2025',d:'Viernes',  fact:31,bruto:5470451,  iva:437636, prop:442613, desc:148800, tot:6201900, ef:920927,  dat:4963221, qr:317753},
+  {f:'13/12/2025',d:'Sábado',   fact:25,bruto:5987210,  iva:478977, prop:485613, desc:0,      tot:6951800, ef:3105582, dat:2705270, qr:1140948},
+  {f:'14/12/2025',d:'Domingo',  fact:41,bruto:6077020,  iva:486162, prop:479818, desc:1100,   tot:7041900, ef:1618257, dat:5289955, qr:133688},
+  {f:'15/12/2025',d:'Lunes',    fact:8, bruto:1457869,  iva:116630, prop:140202, desc:0,      tot:1714700, ef:280756,  dat:1433944, qr:0},
+  {f:'16/12/2025',d:'Martes',   fact:24,bruto:3368602,  iva:269488, prop:250510, desc:26200,  tot:3862400, ef:1136641, dat:2282908, qr:442851},
+  {f:'17/12/2025',d:'Miércoles',fact:8, bruto:1453053,  iva:116244, prop:102203, desc:12800,  tot:1658700, ef:355670,  dat:718210,  qr:584820},
+  {f:'18/12/2025',d:'Jueves',   fact:12,bruto:2339994,  iva:187199, prop:214807, desc:42200,  tot:2699800, ef:1255569, dat:1318813, qr:125418},
+  {f:'19/12/2025',d:'Viernes',  fact:18,bruto:4410179,  iva:352814, prop:179407, desc:11000,  tot:4931400, ef:1015270, dat:1132679, qr:2783451},
+  {f:'20/12/2025',d:'Sábado',   fact:29,bruto:6055174,  iva:484414, prop:487512, desc:11700,  tot:7015400, ef:2556004, dat:4459396, qr:0},
+  {f:'21/12/2025',d:'Domingo',  fact:36,bruto:3474063,  iva:277925, prop:267312, desc:19500,  tot:3999800, ef:1833917, dat:1840953, qr:324930},
+  {f:'22/12/2025',d:'Lunes',    fact:16,bruto:2785177,  iva:222814, prop:178008, desc:30800,  tot:3155200, ef:854568,  dat:1982804, qr:317828},
+  {f:'23/12/2025',d:'Martes',   fact:10,bruto:1130182,  iva:90415,  prop:106093, desc:0,      tot:1326689, ef:216405,  dat:971702,  qr:138582},
+  {f:'24/12/2025',d:'Miércoles',fact:14,bruto:1748606,  iva:139888, prop:164705, desc:0,      tot:2053200, ef:577636,  dat:1475564, qr:0},
+  {f:'25/12/2025',d:'Jueves',   fact:16,bruto:1847309,  iva:147785, prop:145306, desc:34200,  tot:2106200, ef:662179,  dat:1334652, qr:109369},
+  {f:'26/12/2025',d:'Viernes',  fact:26,bruto:4156470,  iva:332518, prop:327312, desc:91400,  tot:4724900, ef:669896,  dat:2026423, qr:2028581},
+  {f:'27/12/2025',d:'Sábado',   fact:34,bruto:5828317,  iva:466265, prop:533518, desc:65400,  tot:6762700, ef:1609507, dat:5045112, qr:108081},
+  {f:'28/12/2025',d:'Domingo',  fact:33,bruto:5976372,  iva:478110, prop:498918, desc:33600,  tot:6919800, ef:1755064, dat:4744906, qr:419830},
+  {f:'29/12/2025',d:'Lunes',    fact:26,bruto:4483504,  iva:358680, prop:346226, desc:38300,  tot:5150110, ef:1347567, dat:3683953, qr:118590},
+  {f:'30/12/2025',d:'Martes',   fact:16,bruto:3333788,  iva:266703, prop:328209, desc:13600,  tot:3915100, ef:1000278, dat:2914822, qr:0},
+  {f:'31/12/2025',d:'Miércoles',fact:13,bruto:2361660,  iva:188933, prop:205607, desc:0,      tot:2756200, ef:459259,  dat:2280840, qr:16101},
+];
+const dicGrupos=[['Platos Fuertes',44694300],['Comida Urbana y Noche',21247000],['Bebidas',13342800],['Cervezas',5908200],['Sodificadas',5838000],['Menú Infantil',4472200],['Entradas',4297700],['Compartir y Fusión',2853600],['Cócteles',2014500],['Sorbetes',1393200],['Postres',1346200],['Licores y Aguardientes',676000],['Porciones',466800]];
+const dicProds=[['Family Burguer',437,13964300],['Posta Cartagenera',159,6503100],['Bife Chorizo',107,6409300],['Panceta (Pork Belly)',123,4187700],['Mega Family',99,4069100],['Chuletón de Cerdo',111,3762900],['Chicken Tenders y Smiles',147,3255000],['Alitas Coreanas',104,3213600],['Club Colombia',306,3029400],['Arroz Putiao',66,2963400],['Limonada Natural',371,2930900],['Pad Thai',66,2897400],['Parrillada Mar y Tierra',24,2853600],['Churrasco de Pollo',73,2693700],['Bife de Paleta',44,2415600]];
+const dicHoras=[[8,6900],[9,19800],[12,455900],[13,2680000],[14,10015700],[15,16598700],[16,11304000],[17,4938400],[18,4848500],[19,5285700],[20,9399000],[21,19822100],[22,17588900],[23,5771900]];
+
+// ── DATOS ENERO 2026 (fuente: DIAN — VN+IMP+PROP-DESC=RECIBIDO ✓) ──
+const eneDias=[
+  {f:'02/01/2026',d:'Viernes',  fact:22,bruto:3505174, iva:280414, prop:284812,desc:2900,  tot:4067500, ef:696201,  dat:3326387, qr:44913},
+  {f:'03/01/2026',d:'Sábado',   fact:15,bruto:2776844, iva:222148, prop:253709,desc:27800, tot:3224900, ef:392709,  dat:2353241, qr:478950},
+  {f:'04/01/2026',d:'Domingo',  fact:21,bruto:4525452, iva:362036, prop:428311,desc:11500, tot:5304300, ef:1307327, dat:3749041, qr:247932},
+  {f:'05/01/2026',d:'Lunes',    fact:14,bruto:1729903, iva:138392, prop:131605,desc:3200,  tot:1996700, ef:76521,   dat:1890469, qr:29711},
+  {f:'06/01/2026',d:'Martes',   fact:7, bruto:1985179, iva:158814, prop:195307,desc:0,     tot:2339300, ef:753071,  dat:1569971, qr:16257},
+  {f:'07/01/2026',d:'Miércoles',fact:11,bruto:965830,  iva:77266,  prop:74603, desc:0,     tot:1117700, ef:247842,  dat:729168,  qr:140690},
+  {f:'08/01/2026',d:'Jueves',   fact:27,bruto:3166380, iva:253310, prop:284310,desc:0,     tot:3704000, ef:313622,  dat:2909357, qr:481021},
+  {f:'09/01/2026',d:'Viernes',  fact:15,bruto:1805921, iva:144474, prop:151006,desc:14600, tot:2086800, ef:634899,  dat:1451901, qr:0},
+  {f:'10/01/2026',d:'Sábado',   fact:28,bruto:3737674, iva:299014, prop:336312,desc:16400, tot:4356600, ef:463213,  dat:3566914, qr:326472},
+  {f:'11/01/2026',d:'Domingo',  fact:30,bruto:4264339, iva:341147, prop:401414,desc:0,     tot:5006900, ef:1491035, dat:3364424, qr:151441},
+  {f:'12/01/2026',d:'Lunes',    fact:23,bruto:3453973, iva:276318, prop:338309,desc:38000, tot:4030600, ef:1427668, dat:1660301, qr:942631},
+  {f:'13/01/2026',d:'Martes',   fact:7, bruto:819813,  iva:65585,  prop:79402, desc:0,     tot:964800,  ef:165522,  dat:773453,  qr:25825},
+  {f:'14/01/2026',d:'Miércoles',fact:11,bruto:726572,  iva:58126,  prop:66203, desc:1300,  tot:849600,  ef:494039,  dat:321023,  qr:34538},
+  {f:'15/01/2026',d:'Jueves',   fact:8, bruto:2599810, iva:207985, prop:223905,desc:19700, tot:3012000, ef:1990014, dat:1021986, qr:0},
+  {f:'16/01/2026',d:'Viernes',  fact:20,bruto:1611107, iva:128889, prop:127805,desc:22800, tot:1845000, ef:267737,  dat:1409622, qr:167641},
+  {f:'17/01/2026',d:'Sábado',   fact:34,bruto:4644987, iva:371599, prop:403914,desc:70200, tot:5350300, ef:2056249, dat:2934208, qr:359844},
+  {f:'18/01/2026',d:'Domingo',  fact:26,bruto:3674804, iva:293984, prop:341611,desc:9100,  tot:4301300, ef:348543,  dat:3558207, qr:394550},
+  {f:'19/01/2026',d:'Lunes',    fact:13,bruto:1618144, iva:129452, prop:121704,desc:53400, tot:1815900, ef:961515,  dat:804717,  qr:49668},
+  {f:'20/01/2026',d:'Martes',   fact:7, bruto:743146,  iva:59452,  prop:50802, desc:0,     tot:853400,  ef:239029,  dat:515804,  qr:98567},
+  {f:'21/01/2026',d:'Miércoles',fact:11,bruto:1902588, iva:152207, prop:168805,desc:27500, tot:2196100, ef:633457,  dat:1443582, qr:119061},
+  {f:'22/01/2026',d:'Jueves',   fact:12,bruto:1702959, iva:136237, prop:139805,desc:0,     tot:1979000, ef:368749,  dat:1610251, qr:0},
+  {f:'23/01/2026',d:'Viernes',  fact:14,bruto:1713885, iva:137111, prop:137305,desc:1600,  tot:1986700, ef:260815,  dat:1388651, qr:337235},
+  {f:'24/01/2026',d:'Sábado',   fact:27,bruto:3391008, iva:271281, prop:293411,desc:35300, tot:3920400, ef:1483464, dat:2280218, qr:156718},
+  {f:'25/01/2026',d:'Domingo',  fact:19,bruto:2292402, iva:183392, prop:205806,desc:7900,  tot:2673700, ef:1176480, dat:1467198, qr:30022},
+  {f:'26/01/2026',d:'Lunes',    fact:11,bruto:1328886, iva:106311, prop:107704,desc:0,     tot:1542900, ef:900348,  dat:642552,  qr:0},
+  {f:'27/01/2026',d:'Martes',   fact:7, bruto:813146,  iva:65052,  prop:74402, desc:0,     tot:952600,  ef:427813,  dat:488015,  qr:36772},
+  {f:'28/01/2026',d:'Miércoles',fact:8, bruto:1155090, iva:92407,  prop:108903,desc:0,     tot:1356400, ef:863203,  dat:493197,  qr:0},
+  {f:'29/01/2026',d:'Jueves',   fact:12,bruto:1515274, iva:121222, prop:131804,desc:64700, tot:1703600, ef:78804,   dat:1517052, qr:107744},
+  {f:'30/01/2026',d:'Viernes',  fact:25,bruto:3117214, iva:249377, prop:276208,desc:40900, tot:3601900, ef:1102417, dat:1576273, qr:923210},
+  {f:'31/01/2026',d:'Sábado',   fact:31,bruto:4776655, iva:382132, prop:374713,desc:20600, tot:5512900, ef:898032,  dat:3489858, qr:1125011},
+];
+
+const eneGrupos=[['Platos Fuertes',34499000],['Comida Urbana y Noche',11487100],['Bebidas',10106400],['Sodificadas',4600900],['Menú Infantil',3656800],['Entradas',3563200],['Cervezas',2783900],['Compartir y Fusión',2496900],['Postres',1430400],['Cócteles',1429400],['Sorbetes',903000],['Porciones y Otros',638500]];
+const eneProds=[['Family Burguer',225,7441500],['Bife Chorizo',84,5031600],['Bife de Paleta',80,4392000],['Posta Cartagenera',95,3885500],['Chuletón de Cerdo',94,3186600],['Panceta (Pork Belly)',93,3152700],['Parrillada Mar y Tierra',21,2496900],['Chicken Tenders y Smiles',111,2430900],['Arroz Putiao',47,2110300],['Sodificada Maracuyá',149,2071100],['Mega Family',50,2068000],['Pad Thai',46,2019400],['Alitas Coreanas',64,1977600],['Burrito Fish de Camarones',52,1918800],['Chicharrón de Salmón',60,1914000]];
+const eneHoras=[[12,375100],[13,3133700],[14,11983000],[15,7995300],[16,6455900],[17,6948900],[18,3555000],[19,4666000],[20,9583800],[21,11214300],[22,10612100],[23,1306400]];
+
+// ── DATOS FEBRERO 2026 (fuente: DIAN — VN+IMP+PROP-DESC=RECIBIDO ✓) ──
+const febDias=[
+  {f:'01/02/2026',d:'Domingo',  fact:30,bruto:5067859, iva:405429, prop:425263,desc:127800,tot:5770750, ef:1189724, dat:3560631, qr:1020396},
+  {f:'02/02/2026',d:'Lunes',    fact:13,bruto:1448700, iva:115896, prop:67604, desc:60000, tot:1572200, ef:317635,  dat:602613,  qr:651952},
+  {f:'03/02/2026',d:'Martes',   fact:14,bruto:4799433, iva:383955, prop:237212,desc:335000,tot:5085600, ef:432875,  dat:1102400, qr:3550325},
+  {f:'04/02/2026',d:'Miércoles',fact:16,bruto:1763329, iva:141066, prop:157705,desc:6800,  tot:2055300, ef:1098016, dat:957284,  qr:0},
+  {f:'05/02/2026',d:'Jueves',   fact:17,bruto:1999901, iva:159992, prop:142507,desc:5400,  tot:2297000, ef:655951,  dat:1056137, qr:584911},
+  {f:'06/02/2026',d:'Viernes',  fact:21,bruto:2963509, iva:237081, prop:240310,desc:113900,tot:3327000, ef:461327,  dat:1951024, qr:914650},
+  {f:'07/02/2026',d:'Sábado',   fact:31,bruto:4702672, iva:376214, prop:391315,desc:0,     tot:5470200, ef:2530946, dat:2930099, qr:9155},
+  {f:'08/02/2026',d:'Domingo',  fact:28,bruto:3568231, iva:285458, prop:277811,desc:3800,  tot:4127700, ef:1118925, dat:3008775, qr:0},
+  {f:'09/02/2026',d:'Lunes',    fact:8, bruto:1104627, iva:88370,  prop:100203,desc:1100,  tot:1292100, ef:208815,  dat:1083285, qr:0},
+  {f:'10/02/2026',d:'Martes',   fact:7, bruto:736942,  iva:58955,  prop:71702, desc:0,     tot:867600,  ef:131246,  dat:736354,  qr:0},
+  {f:'11/02/2026',d:'Miércoles',fact:10,bruto:1803144, iva:144251, prop:168505,desc:35600, tot:2080300, ef:311233,  dat:1686652, qr:82415},
+  {f:'12/02/2026',d:'Jueves',   fact:14,bruto:2326290, iva:186103, prop:174106,desc:39300, tot:2647200, ef:1202324, dat:1444876, qr:0},
+  {f:'13/02/2026',d:'Viernes',  fact:19,bruto:2583327, iva:206666, prop:223207,desc:7000,  tot:3006200, ef:586909,  dat:2419291, qr:0},
+  {f:'14/02/2026',d:'Sábado',   fact:60,bruto:8592110, iva:687369, prop:707921,desc:33000, tot:9954400, ef:3030302, dat:4958266, qr:1965832},
+  {f:'15/02/2026',d:'Domingo',  fact:37,bruto:5537022, iva:442962, prop:448016,desc:18200, tot:6409800, ef:1049203, dat:5270881, qr:89716},
+  {f:'16/02/2026',d:'Lunes',    fact:8, bruto:964812,  iva:77185,  prop:68003, desc:29300, tot:1080700, ef:791545,  dat:164283,  qr:124872},
+  {f:'17/02/2026',d:'Martes',   fact:14,bruto:1087774, iva:87022,  prop:108004,desc:13870, tot:1268930, ef:536282,  dat:732648,  qr:0},
+  {f:'18/02/2026',d:'Miércoles',fact:12,bruto:1452403, iva:116192, prop:88205, desc:0,     tot:1656800, ef:610870,  dat:843663,  qr:202268},
+  {f:'19/02/2026',d:'Jueves',   fact:11,bruto:932590,  iva:74607,  prop:62211, desc:34100, tot:1035308, ef:546590,  dat:433417,  qr:55301},
+  {f:'20/02/2026',d:'Viernes',  fact:17,bruto:2156197, iva:172496, prop:166408,desc:35800, tot:2459300, ef:694163,  dat:1309859, qr:455277},
+  {f:'21/02/2026',d:'Sábado',   fact:24,bruto:3711472, iva:296918, prop:336130,desc:0,     tot:4344519, ef:215687,  dat:4018713, qr:110120},
+  {f:'22/02/2026',d:'Domingo',  fact:29,bruto:4842674, iva:387414, prop:335112,desc:177400,tot:5387800, ef:1672658, dat:1992727, qr:1722415},
+  {f:'23/02/2026',d:'Lunes',    fact:7, bruto:1334071, iva:106726, prop:98504, desc:0,     tot:1539300, ef:909606,  dat:629694,  qr:0},
+  {f:'24/02/2026',d:'Martes',   fact:5, bruto:1278423, iva:102274, prop:125003,desc:26400, tot:1479300, ef:494136,  dat:985164,  qr:0},
+  {f:'25/02/2026',d:'Miércoles',fact:5, bruto:242499,  iva:19400,  prop:22601, desc:0,     tot:284500,  ef:126662,  dat:157838,  qr:0},
+  {f:'26/02/2026',d:'Jueves',   fact:4, bruto:563610,  iva:45089,  prop:36801, desc:0,     tot:645500,  ef:219833,  dat:425667,  qr:0},
+  {f:'27/02/2026',d:'Viernes',  fact:30,bruto:4227305, iva:338184, prop:390611,desc:91800, tot:4864300, ef:1150736, dat:3028694, qr:684870},
+  {f:'28/02/2026',d:'Sábado',   fact:25,bruto:3254991, iva:260399, prop:249610,desc:89156, tot:3675844, ef:2064601, dat:2799603, qr:27552},
+];
+
+const febGrupos=[['Platos Fuertes',37302600],['Comida Urbana y Noche',11760500],['Bebidas',9903700],['Entradas',4777500],['Sodificadas',4114400],['Compartir y Fusión',2972500],['Cervezas',2558400],['Menú Infantil',2247900],['Cócteles',1826000],['Sorbetes',1251300],['Postres',1192500],['Licores y Otros',1141500]];
+const febProds=[['Family Burguer',181,6233900],['Bife Chorizo',85,5126500],['Posta Cartagenera',91,3760900],['Bife de Paleta',66,3623400],['Mega Family',72,3060800],['Bife Bondiola',74,2988600],['Parrillada Mar y Tierra',25,2972500],['Burrito Fish de Camarones',63,2378700],['Panceta (Pork Belly)',69,2339100],['Arroz Putiao',49,2215100],['Churrasco de Pollo',57,2119300],['Costilla de Res Braseada',45,2104500],['Sodificada Maracuyá',136,1890400],['Alitas Coreanas',58,1849200],['Chicken Tenders y Smiles',84,1841600]];
+const febHoras=[[11,71800],[12,123900],[13,3666400],[14,7562300],[15,15258800],[16,6437400],[17,4868100],[18,5092900],[19,5771400],[20,6748000],[21,14914100],[22,9139400],[23,1395300]];
+
+// ── DATOS MARZO 2026 (fuente: DIAN — VN+IMP+PROP-DESC=RECIBIDO ✓) ──
+const marDias=[
+  {f:'01/03/2026',d:'Domingo',  fact:47,bruto:8232668,  iva:658613,  prop:604618,desc:145000,tot:9350900,  ef:2222170, dat:6581745,  qr:546984},
+  {f:'02/03/2026',d:'Lunes',    fact:7, bruto:981664,   iva:78533,   prop:97203, desc:0,     tot:1157400,  ef:241589,  dat:908278,   qr:7533},
+  {f:'03/03/2026',d:'Martes',   fact:5, bruto:403980,   iva:32318,   prop:32501, desc:0,     tot:468800,   ef:73173,   dat:395627,   qr:0},
+  {f:'04/03/2026',d:'Miércoles',fact:9, bruto:940646,   iva:75252,   prop:68803, desc:0,     tot:1084700,  ef:641275,  dat:148627,   qr:294798},
+  {f:'05/03/2026',d:'Jueves',   fact:8, bruto:1205274,  iva:96422,   prop:116204,desc:0,     tot:1417900,  ef:797453,  dat:611733,   qr:8714},
+  {f:'06/03/2026',d:'Viernes',  fact:13,bruto:1118516,  iva:89481,   prop:109603,desc:0,     tot:1317600,  ef:236143,  dat:991581,   qr:89876},
+  {f:'07/03/2026',d:'Sábado',   fact:31,bruto:4649248,  iva:371940,  prop:390313,desc:0,     tot:5411500,  ef:1125653, dat:3633574,  qr:652273},
+  {f:'08/03/2026',d:'Domingo',  fact:83,bruto:13006081, iva:1040486, prop:851633,desc:180000,tot:14718200, ef:2771479, dat:10850416, qr:2137905},
+  {f:'09/03/2026',d:'Lunes',    fact:11,bruto:1602125,  iva:128170,  prop:51205, desc:47000, tot:1734500,  ef:456405,  dat:768561,   qr:509534},
+  {f:'10/03/2026',d:'Martes',   fact:11,bruto:1574441,  iva:125955,  prop:95604, desc:9100,  tot:1786900,  ef:941265,  dat:845635,   qr:0},
+  {f:'11/03/2026',d:'Miércoles',fact:4, bruto:348610,   iva:27889,   prop:15601, desc:0,     tot:392100,   ef:203184,  dat:188916,   qr:0},
+  {f:'12/03/2026',d:'Jueves',   fact:9, bruto:713701,   iva:57096,   prop:55003, desc:12900, tot:812900,   ef:74456,   dat:599656,   qr:138788},
+  {f:'13/03/2026',d:'Viernes',  fact:23,bruto:2816660,  iva:225333,  prop:205208,desc:1100,  tot:3246100,  ef:547152,  dat:2595866,  qr:103081},
+  {f:'14/03/2026',d:'Sábado',   fact:35,bruto:3636936,  iva:290955,  prop:231610,desc:0,     tot:4159500,  ef:463220,  dat:3422714,  qr:273566},
+  {f:'15/03/2026',d:'Domingo',  fact:26,bruto:3088233,  iva:247059,  prop:258708,desc:31200, tot:3562800,  ef:686538,  dat:2707057,  qr:169204},
+  {f:'16/03/2026',d:'Lunes',    fact:5, bruto:170462,   iva:13637,   prop:0,     desc:1100,  tot:179000,   ef:46281,   dat:132719,   qr:0},
+  {f:'17/03/2026',d:'Martes',   fact:6, bruto:1253052,  iva:100244,  prop:84103, desc:0,     tot:1437400,  ef:150293,  dat:1287107,  qr:0},
+  {f:'18/03/2026',d:'Miércoles',fact:6, bruto:429165,   iva:34333,   prop:10701, desc:0,     tot:474200,   ef:249005,  dat:225195,   qr:0},
+  {f:'19/03/2026',d:'Jueves',   fact:10,bruto:991294,   iva:79304,   prop:67502, desc:0,     tot:1138100,  ef:157969,  dat:755509,   qr:224622},
+  {f:'20/03/2026',d:'Viernes',  fact:15,bruto:1528514,  iva:122281,  prop:107104,desc:1100,  tot:1756800,  ef:290794,  dat:1447206,  qr:18800},
+  {f:'21/03/2026',d:'Sábado',   fact:27,bruto:4329250,  iva:346340,  prop:302110,desc:0,     tot:4977700,  ef:1456975, dat:3476224,  qr:44501},
+  {f:'22/03/2026',d:'Domingo',  fact:35,bruto:6105076,  iva:488406,  prop:477918,desc:26300, tot:7045100,  ef:2755811, dat:3933797,  qr:355493},
+  {f:'23/03/2026',d:'Lunes',    fact:25,bruto:2973973,  iva:237918,  prop:242209,desc:1600,  tot:3452500,  ef:562385,  dat:2875581,  qr:14534},
+  {f:'24/03/2026',d:'Martes',   fact:9, bruto:627221,   iva:50178,   prop:54801, desc:0,     tot:732200,   ef:146570,  dat:572768,   qr:12863},
+  {f:'25/03/2026',d:'Miércoles',fact:7, bruto:1088424,  iva:87074,   prop:101802,desc:0,     tot:1277300,  ef:502662,  dat:687927,   qr:86711},
+  {f:'26/03/2026',d:'Jueves',   fact:12,bruto:1147219,  iva:91778,   prop:112304,desc:17400, tot:1333900,  ef:541957,  dat:488774,   qr:303169},
+  {f:'27/03/2026',d:'Viernes',  fact:25,bruto:4196470,  iva:335718,  prop:301112,desc:21200, tot:4812100,  ef:1807962, dat:2964110,  qr:40028},
+  {f:'28/03/2026',d:'Sábado',   fact:53,bruto:5054153,  iva:404332,  prop:363514,desc:50500, tot:5771500,  ef:1224574, dat:4143423,  qr:403503},
+  {f:'29/03/2026',d:'Domingo',  fact:46,bruto:6098595,  iva:487888,  prop:370917,desc:2700,  tot:6954700,  ef:1992065, dat:3213110,  qr:1749524},
+  {f:'30/03/2026',d:'Lunes',    fact:28,bruto:2803325,  iva:224266,  prop:208909,desc:2000,  tot:3234500,  ef:1018874, dat:1876429,  qr:339197},
+  {f:'31/03/2026',d:'Martes',   fact:17,bruto:2431382,  iva:194511,  prop:195107,desc:27300, tot:2793700,  ef:573337,  dat:2100993,  qr:119370},
+];
+
+const marGrupos=[['Platos Fuertes',39244500],['Comida Urbana y Noche',15461600],['Bebidas',10845100],['Entradas',5150500],['Sodificadas',5073500],['Compartir y Fusión',4042600],['Cervezas',3824600],['Cócteles',2707100],['Menú Infantil',2318300],['Postres',1447400],['Sorbetes',1186800],['Licores y Otros',1088300]];
+const marProds=[['Family Burguer',203,7287700],['Parrillada Mar y Tierra',34,4042600],['Bife de Paleta',70,3843000],['Arroz Putiao del Pacífico',69,3443100],['Bife de Punta de Anca',53,3439700],['Bife Chorizo',51,3309900],['Perla del Caribe',70,3213000],['Mega Family',68,2985200],['Roulade de Pollo y Tocineta',66,2633400],['Posta Cartagenera',56,2458400],['Sodificada Maracuyá',176,2446400],['Churrasco de Pollo',61,2372900],['Costilla de Res Braseada',48,2347200],['Panceta Acevichada Tropical',53,2326700],['Chicken Tenders',97,2318300]];
+const marHoras=[[11,20700],[12,952500],[13,2925000],[14,12943000],[15,9989300],[16,9264300],[17,8921200],[18,3514300],[19,6785000],[20,10497600],[21,11309300],[22,12763300],[23,2504800]];
+
+// ── DATOS ABRIL 2026 (fuente: RADIAN DIAN — bruto=INC/8% ✓) ──
+const abrDias = [
+  {f:'01/04/2026',d:'Miércoles',fact:29,bruto:2819807, iva:225585, prop:245109, desc:0,     tot:3290500, ef:990050, dat:1943100, qr:357350},
+  {f:'02/04/2026',d:'Jueves',   fact:32,bruto:6154893, iva:492391, prop:537814, desc:61700, tot:7178800, ef:953850, dat:5653250, qr:571700},
+  {f:'03/04/2026',d:'Viernes',  fact:47,bruto:7576090, iva:606087, prop:584423, desc:15700, tot:8763600, ef:2289100, dat:6296200, qr:178300},
+  {f:'04/04/2026',d:'Sábado',   fact:38,bruto:5508226, iva:440658, prop:383616, desc:0,     tot:6332500, ef:1108767, dat:3998867, qr:1224867},
+  {f:'05/04/2026',d:'Domingo',  fact:27,bruto:4153230, iva:332258, prop:269322, desc:82600, tot:4724013, ef:1348950, dat:2850863, qr:524200},
+  {f:'06/04/2026',d:'Lunes',    fact:8, bruto:1118145, iva:89452, prop:95204,  desc:0,     tot:1302800, ef:480800, dat:822000, qr:0},
+  {f:'07/04/2026',d:'Martes',   fact:10,bruto:1089349, iva:87148, prop:80403,  desc:0,     tot:1256900, ef:353600, dat:591900, qr:311400},
+  {f:'08/04/2026',d:'Miércoles',fact:7, bruto:653516, iva:52281, prop:47002,  desc:0,     tot:752800, ef:153600, dat:512500, qr:86700},
+  {f:'09/04/2026',d:'Jueves',   fact:20,bruto:2892123, iva:231370, prop:100206, desc:51900, tot:3201400, ef:297100, dat:1757800, qr:986300},
+  {f:'10/04/2026',d:'Viernes',  fact:27,bruto:2985363, iva:238829, prop:197108, desc:0,     tot:3421300, ef:1123200, dat:1134650, qr:1163450},
+  {f:'11/04/2026',d:'Sábado',   fact:49,bruto:6089522, iva:487162, prop:293716, desc:8300,  tot:6869600, ef:1741700, dat:2696200, qr:2223500},
+  {f:'12/04/2026',d:'Domingo',  fact:55,bruto:7896834, iva:631747, prop:479519, desc:0,     tot:9008100, ef:1765650, dat:6167250, qr:1061300},
+  {f:'13/04/2026',d:'Lunes',    fact:11,bruto:1003794, iva:80303, prop:23203,  desc:0,     tot:1107300, ef:281300, dat:559800, qr:266200},
+  {f:'14/04/2026',d:'Martes',   fact:20,bruto:1886476, iva:150918, prop:95306,  desc:4500,  tot:2128200, ef:230450, dat:1489650, qr:246600},
+  {f:'15/04/2026',d:'Miércoles',fact:21,bruto:2094068, iva:167525, prop:137907, desc:0,     tot:2399500, ef:509300, dat:1448900, qr:441300},
+  {f:'16/04/2026',d:'Jueves',   fact:20,bruto:1847587, iva:147807, prop:101406, desc:0,     tot:2096800, ef:251100, dat:1594700, qr:243000},
+  {f:'17/04/2026',d:'Viernes',  fact:20,bruto:3759434, iva:300755, prop:216811, desc:0,     tot:4277000, ef:704250, dat:2809300, qr:642850},
+  {f:'18/04/2026',d:'Sábado',   fact:47,bruto:5262766, iva:421021, prop:215813, desc:6600,  tot:5893000, ef:1936000, dat:1863400, qr:2093600},
+  {f:'19/04/2026',d:'Domingo',  fact:50,bruto:7323039, iva:585843, prop:408618, desc:29200, tot:8314500, ef:1207400, dat:4732300, qr:2374800},
+  {f:'20/04/2026',d:'Lunes',    fact:16,bruto:2602216, iva:208177, prop:87907,  desc:0,     tot:2898300, ef:854050, dat:1175300, qr:852050},
+  {f:'21/04/2026',d:'Martes',   fact:21,bruto:2036660, iva:162933, prop:89307,  desc:2400,  tot:2286500, ef:575300, dat:1076000, qr:635200},
+  {f:'22/04/2026',d:'Miércoles',fact:17,bruto:1551847, iva:124148, prop:87805,  desc:5500,  tot:1763200, ef:601100, dat:841300, qr:154400},
+  {f:'23/04/2026',d:'Jueves',   fact:17,bruto:2234532, iva:178763, prop:103905, desc:10200, tot:2507000, ef:46800, dat:1599300, qr:860900},
+  {f:'24/04/2026',d:'Viernes',  fact:30,bruto:3129806, iva:250385, prop:182109, desc:0,     tot:3562300, ef:1211100, dat:2087200, qr:264000},
+  {f:'25/04/2026',d:'Sábado',   fact:79,bruto:9249143, iva:739931, prop:359425, desc:39800, tot:10308700, ef:2603850, dat:5775750, qr:1867800},
+  {f:'26/04/2026',d:'Domingo',  fact:77,bruto:8358592, iva:668687, prop:414020, desc:0,     tot:9441300, ef:1777350, dat:5669850, qr:1890500},
+  {f:'27/04/2026',d:'Lunes',    fact:20,bruto:2518234, iva:201459, prop:99207,  desc:4200,  tot:2814700, ef:597900, dat:2083300, qr:125600},
+  {f:'28/04/2026',d:'Martes',   fact:23,bruto:2959992, iva:236799, prop:132209, desc:2600,  tot:3326400, ef:915600, dat:1621200, qr:776700},
+  {f:'29/04/2026',d:'Miércoles',fact:28,bruto:2550734, iva:204059, prop:122007, desc:3300,  tot:2873500, ef:970050, dat:1195550, qr:707900},
+  {f:'30/04/2026',d:'Jueves',   fact:33,bruto:3885916, iva:310873, prop:227710, desc:10800, tot:4423500, ef:765450, dat:2605250, qr:988300},
+];
+const abrGrupos=[['Platos Fuertes',60172700],['Comida Urbana y Noche',18697400],['Bebidas',13959300],['Sodificadas',6519100],['Entradas',5174000],['Cervezas',4867400],['Postres',3557500],['Menú Infantil',2294400],['Compartir y Fusión',2259100],['Cócteles',1455800],['Sorbetes',1057800],['Porciones',856000],['Licores y Otros',443000]];
+const abrProds=[['Bife de Paleta',225,12352500],['Family Burguer',212,7610800],['Bife de Punta de Anca',90,5841000],['Arroz Putiao del Pacífico',93,4640700],['Perla del Caribe',99,4544100],['Pad Thai',71,3897900],['Limonada Natural',492,3886800],['Mega Family',75,3292500],['Salmón Marinero',54,3126600],['Cow Boy',55,3019500],['Alitas Coreanas',81,2745900],['Churrasco de Pollo',67,2606300],['Roulade de Pollo y Tocineta',65,2593500],['Sodificada Maracuyá',186,2585400],['Encocado Pollo Cremoso',59,2354100]];
+const abrHoras=[[11,7900],[12,1445200],[13,7105700],[14,15564700],[15,15271300],[16,11826800],[17,10913600],[18,6686300],[19,6453500],[20,10372000],[21,17730100],[22,15439700],[23,3430800]];
+
+// ── DATOS MAYO 2026 (fuente: RADIAN DIAN ✓) ──
+const mayDias = [
+  {f:'01/05/2026',d:'Viernes',  fact:43,bruto:5559336, iva:444747, prop:326716, desc:19200, tot:6330798, ef:1654201, dat:3300797, qr:1270201},
+  {f:'02/05/2026',d:'Sábado',   fact:48,bruto:8198871, iva:655910, prop:474625, desc:38900, tot:9329406, ef:1637906, dat:6001699, qr:1689801},
+  {f:'03/05/2026',d:'Domingo',  fact:37,bruto:5443876, iva:435510, prop:407617, desc:111200, tot:6287003, ef:1428652, dat:4657651, qr:200700},
+  {f:'04/05/2026',d:'Lunes',    fact:3, bruto:340462, iva:27237, prop:19501, desc:6600, tot:387200, ef:141650, dat:20700, qr:224850},
+  {f:'05/05/2026',d:'Martes',   fact:14,bruto:1992679, iva:159414, prop:98705, desc:0, tot:2250798, ef:792401, dat:1124998, qr:109600},
+  {f:'06/05/2026',d:'Miércoles',fact:11,bruto:1588699, iva:127096, prop:143006, desc:25200, tot:1858801, ef:137601, dat:1452000, qr:269200},
+  {f:'07/05/2026',d:'Jueves',   fact:13,bruto:2822029, iva:225762, prop:179356, desc:42900, tot:3227147, ef:331550, dat:1870998, qr:1024598},
+  {f:'08/05/2026',d:'Viernes',  fact:25,bruto:4255914, iva:340473, prop:291814, desc:0, tot:4888201, ef:1187700, dat:3229100, qr:471401},
+  {f:'09/05/2026',d:'Sábado',   fact:44,bruto:7180816, iva:574465, prop:323518, desc:4400, tot:8078799, ef:1484552, dat:5550349, qr:1005699},
+  {f:'10/05/2026',d:'Domingo',  fact:99,bruto:17979034, iva:1438323, prop:912843, desc:76700, tot:20330200, ef:5018304, dat:12907695, qr:2404202},
+  {f:'11/05/2026',d:'Lunes',    fact:24,bruto:2822955, iva:225836, prop:234209, desc:0, tot:3283000, ef:1058951, dat:1271549, qr:952499},
+  {f:'12/05/2026',d:'Martes',   fact:19,bruto:2550365, iva:204029, prop:190606, desc:4800, tot:2944999, ef:1007500, dat:1492799, qr:28100},
+  {f:'13/05/2026',d:'Miércoles',fact:8, bruto:823979, iva:65918, prop:107003, desc:26000, tot:996901, ef:167802, dat:535700, qr:293399},
+  {f:'14/05/2026',d:'Jueves',   fact:10,bruto:2470455, iva:197636, prop:296605, desc:4600, tot:2964697, ef:654134, dat:1531932, qr:543432},
+  {f:'15/05/2026',d:'Viernes',  fact:18,bruto:3529529, iva:282362, prop:167906, desc:7700, tot:3979798, ef:897499, dat:3082298, qr:0},
+  {f:'16/05/2026',d:'Sábado',   fact:39,bruto:5444431, iva:435554, prop:233563, desc:15500, tot:6113548, ef:1551500, dat:4150848, qr:395400},
+  {f:'17/05/2026',d:'Domingo',  fact:34,bruto:6739988, iva:539199, prop:139809, desc:3900, tot:7418995, ef:2869299, dat:4528996, qr:20700},
+  {f:'18/05/2026',d:'Lunes',    fact:30,bruto:3567767, iva:285421, prop:176110, desc:4900, tot:4029299, ef:1416399, dat:2302100, qr:310800},
+  {f:'19/05/2026',d:'Martes',   fact:6, bruto:761294, iva:60904, prop:30902, desc:5000, tot:853100, ef:439500, dat:413600, qr:0},
+  {f:'20/05/2026',d:'Miércoles',fact:14,bruto:2442957, iva:195437, prop:126405, desc:0, tot:2764799, ef:932151, dat:1832648, qr:0},
+  {f:'21/05/2026',d:'Jueves',   fact:11,bruto:826848, iva:66148, prop:101804, desc:15600, tot:994801, ef:335501, dat:504000, qr:155300},
+  {f:'22/05/2026',d:'Viernes',  fact:26,bruto:2454622, iva:196370, prop:321910, desc:7500, tot:2972902, ef:481101, dat:1916302, qr:575499},
+  {f:'23/05/2026',d:'Sábado',   fact:23,bruto:3173974, iva:253918, prop:97006, desc:37100, tot:3524897, ef:1672500, dat:1532597, qr:302200},
+  {f:'24/05/2026',d:'Domingo',  fact:40,bruto:5312395, iva:424992, prop:181712, desc:0, tot:5919098, ef:1966284, dat:2879931, qr:1056983},
+  {f:'25/05/2026',d:'Lunes',    fact:13,bruto:1063793, iva:85103, prop:53304, desc:23200, tot:1202201, ef:243701, dat:588199, qr:310401},
+  {f:'26/05/2026',d:'Martes',   fact:14,bruto:1429347, iva:114348, prop:24004, desc:0, tot:1567699, ef:331401, dat:1236297, qr:0},
+  {f:'27/05/2026',d:'Miércoles',fact:15,bruto:1417866, iva:113429, prop:5, desc:20600, tot:1531300, ef:585200, dat:452100, qr:494000},
+  {f:'28/05/2026',d:'Jueves',   fact:14,bruto:2546106, iva:203688, prop:30303, desc:0, tot:2780097, ef:2007598, dat:767999, qr:4500},
+  {f:'29/05/2026',d:'Viernes',  fact:21,bruto:3002493, iva:240199, prop:220208, desc:0, tot:3462900, ef:1440450, dat:1867150, qr:155300},
+  {f:'30/05/2026',d:'Sábado',   fact:46,bruto:4631930, iva:370554, prop:226515, desc:74800, tot:5229000, ef:2544900, dat:2043200, qr:523300},
+  {f:'31/05/2026',d:'Domingo',  fact:46,bruto:6837296, iva:546984, prop:341220, desc:114100, tot:7725500, ef:1938350, dat:4615350, qr:1171800},
+];
+const mayGrupos=[['Platos Fuertes',59600100],['Comida Urbana y Noche',15704900],['Bebidas',13219000],['Sodificadas',8173200],['Entradas',6613000],['Cervezas',3813400],['Cócteles',2685400],['Postres',2234300],['Menú Infantil',2127100],['Compartir y Fusión',1902400],['Licores y Otros',1256500],['Sorbetes',851400],['Porciones',801900]];
+const mayProds=[['Salmón Marinero',113,6542700],['Family Burguer',180,6462000],['Perla del Caribe',136,6242400],['Bife de Punta de Anca',90,5841000],['Sodificada Maracuyá',283,3933700],['Bife Bondiola',81,3474900],['Churrasco de Pollo',85,3306500],['Mega Family',74,3248600],['Panceta Acevichada Tropical',71,3116900],['Arroz Putiao del Pacífico',62,3093800],['Cremoso de Pollo',79,2757100],['Roulade de Pollo y Tocineta',69,2753100],['Ribs de Cerdo BBQ',50,2445000],['Family Kids',93,2222700],['Alitas Coreanas',63,2135700]];
+const mayHoras=[[12,706800],[13,6482200],[14,22996400],[15,14344200],[16,13573500],[17,10625200],[18,3166500],[19,5009100],[20,7729200],[21,13568700],[22,17843600],[23,4130000]];
+
+// ── DATOS JUNIO 2026 (fuente: RADIAN DIAN ✓) ──
+const junDias = [
+  {f:'01/06/2026',d:'Lunes',    fact:19,bruto:2047032, iva:163763, prop:77506, desc:5500, tot:2282800, ef:820900, dat:888600, qr:556400},
+  {f:'02/06/2026',d:'Martes',   fact:17,bruto:2605641, iva:208451, prop:92408, desc:0, tot:2906500, ef:802000, dat:1816300, qr:288200},
+  {f:'03/06/2026',d:'Miércoles',fact:14,bruto:1902865, iva:152229, prop:61906, desc:0, tot:2117000, ef:518300, dat:1188200, qr:189300},
+  {f:'04/06/2026',d:'Jueves',   fact:13,bruto:1632217, iva:130577, prop:132405, desc:0, tot:1895200, ef:819400, dat:1075800, qr:0},
+  {f:'05/06/2026',d:'Viernes',  fact:18,bruto:2005919, iva:160474, prop:164007, desc:12100, tot:2318300, ef:662100, dat:1565500, qr:90700},
+  {f:'06/06/2026',d:'Sábado',   fact:29,bruto:3509063, iva:280725, prop:252312, desc:31900, tot:4010200, ef:1598600, dat:1965300, qr:446300},
+  {f:'07/06/2026',d:'Domingo',  fact:42,bruto:6722484, iva:537799, prop:462117, desc:9300, tot:7713100, ef:2854100, dat:4827300, qr:31700},
+  {f:'08/06/2026',d:'Lunes',    fact:46,bruto:5683411, iva:454673, prop:438216, desc:0, tot:6576300, ef:914500, dat:4976300, qr:685500},
+  {f:'09/06/2026',d:'Martes',   fact:13,bruto:1618700, iva:129496, prop:98804, desc:0, tot:1847000, ef:380700, dat:1375100, qr:91200},
+  {f:'10/06/2026',d:'Miércoles',fact:24,bruto:1861846, iva:148948, prop:155707, desc:0, tot:2166500, ef:755000, dat:1326200, qr:85300},
+  {f:'11/06/2026',d:'Jueves',   fact:24,bruto:2172865, iva:173829, prop:201106, desc:0, tot:2547800, ef:667500, dat:1840500, qr:25900},
+  {f:'12/06/2026',d:'Viernes',  fact:25,bruto:3922954, iva:313836, prop:200410, desc:0, tot:4437200, ef:501600, dat:3195400, qr:740200},
+  {f:'13/06/2026',d:'Sábado',   fact:31,bruto:4576746, iva:366140, prop:352814, desc:20300, tot:5275400, ef:1505000, dat:3558400, qr:209000},
+  {f:'14/06/2026',d:'Domingo',  fact:48,bruto:13380811, iva:1070465, prop:1080024, desc:29900, tot:15501400, ef:3458100, dat:8905800, qr:3137500},
+  {f:'15/06/2026',d:'Lunes',    fact:40,bruto:6565448, iva:525236, prop:408916, desc:5600, tot:7494000, ef:2572000, dat:3473700, qr:1448300},
+  {f:'16/06/2026',d:'Martes',   fact:17,bruto:2698234, iva:215859, prop:170807, desc:63800, tot:3021100, ef:879200, dat:933100, qr:1208800},
+  {f:'17/06/2026',d:'Miércoles',fact:10,bruto:1050923, iva:84074, prop:93503, desc:0, tot:1228500, ef:693500, dat:521100, qr:0},
+  {f:'18/06/2026',d:'Jueves',   fact:27,bruto:2736010, iva:218881, prop:154509, desc:0, tot:3109400, ef:1261900, dat:1003000, qr:828500},
+  {f:'19/06/2026',d:'Viernes',  fact:16,bruto:2002217, iva:160177, prop:190805, desc:0, tot:2353200, ef:524600, dat:1828600, qr:0},
+  {f:'20/06/2026',d:'Sábado',   fact:32,bruto:3875082, iva:310007, prop:336511, desc:0, tot:4521600, ef:848500, dat:3628400, qr:44700},
+  {f:'21/06/2026',d:'Domingo',  fact:27,bruto:2939528, iva:235162, prop:203960, desc:17500, tot:3361150, ef:749100, dat:2328550, qr:247600},
+  {f:'22/06/2026',d:'Lunes',    fact:10,bruto:793053, iva:63444, prop:63203, desc:0, tot:919700, ef:164700, dat:336300, qr:418700},
+  {f:'23/06/2026',d:'Martes',   fact:28,bruto:3510084, iva:280807, prop:290409, desc:23410, tot:4057890, ef:949290, dat:2740200, qr:368400},
+  {f:'24/06/2026',d:'Miércoles',fact:12,bruto:947219, iva:75778, prop:50303, desc:0, tot:1073300, ef:683800, dat:265200, qr:14800},
+  {f:'25/06/2026',d:'Jueves',   fact:8, bruto:1056942, iva:84555, prop:100703, desc:0, tot:1242200, ef:589000, dat:648700, qr:4500},
+  {f:'26/06/2026',d:'Viernes',  fact:20,bruto:2575549, iva:206044, prop:184407, desc:18700, tot:2947300, ef:919400, dat:1775100, qr:252800},
+  {f:'27/06/2026',d:'Sábado',   fact:68,bruto:11078122, iva:886250, prop:772729, desc:55400, tot:12681700, ef:3271000, dat:5908900, qr:3416200},
+  {f:'28/06/2026',d:'Domingo',  fact:41,bruto:6388038, iva:511043, prop:477918, desc:45000, tot:7332000, ef:1712700, dat:2846700, qr:2772600},
+  {f:'29/06/2026',d:'Lunes',    fact:37,bruto:6221282, iva:497703, prop:486816, desc:44100, tot:7161700, ef:877100, dat:4458700, qr:1825900},
+  {f:'30/06/2026',d:'Martes',   fact:21,bruto:3091010, iva:247281, prop:115829, desc:4300, tot:3449820, ef:1114400, dat:807200, qr:706200},
+];
+const junGrupos=[['Platos Fuertes',57672800],['Comida Urbana y Noche',18638400],['Bebidas',14326000],['Sodificadas',7116800],['Cervezas',6636400],['Entradas',5499900],['Compartir y Fusión',2853600],['Menú Infantil',2031500],['Postres',2012500],['Cócteles',2000800],['Licores y Otros',1741900],['Porciones',899000],['Sorbetes',606300]];
+const junProds=[['Family Burguer',234,8400600],['Posta Cartagenera',116,5092400],['Bife de Paleta',81,4446900],['Arroz Putiao del Pacífico',88,4391200],['Salmón Marinero',71,4110900],['Churrasco de Pollo',104,4045600],['Bife de Punta de Anca',61,3958900],['Perla del Caribe',68,3121200],['Sodificada Maracuyá',217,3016300],['Corona',250,2975000],['Limonada Natural',364,2875600],['Parrillada Mar y Tierra',24,2853600],['Mega Family',64,2809600],['Roulade de Pollo y Tocineta',67,2673300],['Bife Chorizo',39,2531100]];
+const junHoras=[[11,45700],[12,777200],[13,3313300],[14,14709100],[15,14366400],[16,10404200],[17,11300000],[18,7740000],[19,4782000],[20,10775300],[21,18470300],[22,20753500],[23,5688200]];
+
+// ── DATOS JULIO 2026 (fuente: RADIAN DIAN ✓) ──
+const julDias = [
+  {f:'01/07/2026',d:'Miércoles',fact:12,bruto:1064904, iva:85192, prop:48303, desc:3300, tot:1195100, ef:594700, dat:313200, qr:287200},
+  {f:'02/07/2026',d:'Jueves',   fact:21,bruto:2929900, iva:234392, prop:279308, desc:0, tot:3443600, ef:159500, dat:699700, qr:2584400},
+  {f:'03/07/2026',d:'Viernes',  fact:40,bruto:5564244, iva:445140, prop:356516, desc:121000, tot:6244900, ef:1123400, dat:4415500, qr:706000},
+  {f:'04/07/2026',d:'Sábado',   fact:46,bruto:6536558, iva:522925, prop:415518, desc:10900, tot:7464100, ef:4623100, dat:2613900, qr:174300},
+  {f:'05/07/2026',d:'Domingo',  fact:35,bruto:5531189, iva:442495, prop:326916, desc:22900, tot:6277700, ef:6071700, dat:0, qr:206000},
+  {f:'06/07/2026',d:'Lunes',    fact:10,bruto:2494068, iva:199525, prop:137907, desc:0, tot:2831500, ef:2831500, dat:0, qr:0},
+  {f:'07/07/2026',d:'Martes',   fact:37,bruto:4395172, iva:351614, prop:275515, desc:100400, tot:4921900, ef:4824300, dat:0, qr:97600},
+  {f:'08/07/2026',d:'Miércoles',fact:14,bruto:1567959, iva:125437, prop:65913, desc:0, tot:1759309, ef:212900, dat:0, qr:851400},
+  {f:'09/07/2026',d:'Jueves',   fact:8, bruto:1260738, iva:100859, prop:114403, desc:0, tot:1476000, ef:209600, dat:0, qr:1266400},
+  {f:'10/07/2026',d:'Viernes',  fact:17,bruto:3245362, iva:259629, prop:247808, desc:2300, tot:3750500, ef:1566800, dat:0, qr:2183700},
+  {f:'11/07/2026',d:'Sábado',   fact:38,bruto:4640822, iva:371266, prop:352212, desc:11000, tot:5353300, ef:2201000, dat:267600, qr:2812900},
+  {f:'12/07/2026',d:'Domingo',  fact:37,bruto:5487950, iva:439036, prop:382114, desc:0, tot:6309100, ef:3111000, dat:441300, qr:2756800},
+  {f:'13/07/2026',d:'Lunes',    fact:37,bruto:5328874, iva:426310, prop:384616, desc:3200, tot:6136600, ef:1595800, dat:2659000, qr:1881800},
+  {f:'14/07/2026',d:'Martes',   fact:10,bruto:1452126, iva:116170, prop:117004, desc:33300, tot:1652000, ef:409800, dat:346600, qr:689300},
+  {f:'15/07/2026',d:'Miércoles',fact:17,bruto:1844531, iva:147563, prop:176906, desc:0, tot:2169000, ef:466000, dat:0, qr:1703000},
+  {f:'16/07/2026',d:'Jueves',   fact:15,bruto:1934069, iva:154726, prop:111986, desc:35580, tot:2165200, ef:844500, dat:333700, qr:987000},
+  {f:'17/07/2026',d:'Viernes',  fact:19,bruto:2063143, iva:165051, prop:167106, desc:19600, tot:2375700, ef:326300, dat:1221700, qr:504100},
+  {f:'18/07/2026',d:'Sábado',   fact:38,bruto:4439710, iva:355177, prop:356113, desc:27400, tot:5123600, ef:390100, dat:951900, qr:3768700},
+  {f:'19/07/2026',d:'Domingo',  fact:40,bruto:7104517, iva:568361, prop:562421, desc:24300, tot:8211000, ef:3595750, dat:2769100, qr:1846150},
+  {f:'20/07/2026',d:'Lunes',    fact:38,bruto:4605358, iva:368429, prop:298213, desc:0, tot:5272000, ef:1312200, dat:3003600, qr:911300},
+  {f:'21/07/2026',d:'Martes',   fact:27,bruto:2913511, iva:233081, prop:204608, desc:10600, tot:3340600, ef:955800, dat:1686900, qr:674000},
+  {f:'22/07/2026',d:'Miércoles',fact:12,bruto:2332586, iva:186607, prop:223207, desc:0, tot:2742400, ef:902600, dat:1402000, qr:437800},
+  {f:'23/07/2026',d:'Jueves',   fact:6, bruto:258147, iva:20652, prop:17901, desc:0, tot:296700, ef:217100, dat:49000, qr:30600},
+  {f:'24/07/2026',d:'Viernes',  fact:31,bruto:5159616, iva:412769, prop:323315, desc:10260, tot:5885440, ef:1932500, dat:3270740, qr:682200},
+  {f:'25/07/2026',d:'Sábado',   fact:51,bruto:5188226, iva:415058, prop:353816, desc:43100, tot:5914000, ef:1365800, dat:3742400, qr:770000},
+  {f:'26/07/2026',d:'Domingo',  fact:56,bruto:6939797, iva:555184, prop:373119, desc:62500, tot:7805600, ef:2304400, dat:3885000, qr:1616200},
+  {f:'27/07/2026',d:'Lunes',    fact:23,bruto:2980270, iva:238422, prop:127809, desc:15600, tot:3330900, ef:885100, dat:1514900, qr:930900},
+  {f:'28/07/2026',d:'Martes',   fact:12,bruto:1994439, iva:159555, prop:111906, desc:18000, tot:2247900, ef:1092800, dat:1001700, qr:153400},
+  {f:'29/07/2026',d:'Miércoles',fact:7, bruto:1101572, iva:88126, prop:23503, desc:0, tot:1213200, ef:196600, dat:0, qr:1016600},
+  {f:'30/07/2026',d:'Jueves',   fact:23,bruto:3151474, iva:252118, prop:161509, desc:4600, tot:3560500, ef:1619700, dat:1350500, qr:590300},
+  {f:'31/07/2026',d:'Viernes',  fact:47,bruto:8521580, iva:681726, prop:123009, desc:14600, tot:9311716, ef:1357400, dat:5372400, qr:278100},
+];
+const julGrupos=[['Platos Fuertes',60038716],['Comida Urbana y Noche',15433500],['Bebidas',14868600],['Sodificadas',7408700],['Entradas',6826400],['Cervezas',6343900],['Compartir y Fusión',3567000],['Menú Infantil',2031500],['Postres',1925900],['Cócteles',1925700],['Sorbetes',1083600],['Licores y Otros',707000],['Porciones',558000]];
+const julProds=[['Family Burguer',215,7718500],['Salmón Marinero',108,6253200],['Bife de Punta de Anca',85,5516500],['Arroz Putiao del Pacífico',93,4640700],['Bife de Paleta',77,4227300],['Parrillada Mar y Tierra',30,3567000],['Perla del Caribe',72,3304800],['Sodificada Maracuyá',226,3141400],['Bife Chorizo',46,2985400],['Churrasco de Pollo',75,2917500],['Mega Family',64,2809600],['Limonada Natural',348,2749200],['Ribs de Cerdo BBQ',49,2396100],['Club Colombia',241,2385900],['Corona',199,2368100]];
+const julHoras=[[11,30700],[12,681000],[13,5475500],[14,13988500],[15,12603300],[16,10371000],[17,17330600],[18,8452100],[19,4936900],[20,5607600],[21,16090500],[22,24234116],[23,3797600]];
+
+// ── DATOS AGOSTO 2026 (fuente: RADIAN DIAN ✓) ──
+const agoDias = [
+  {f:'01/08/2026',d:'Sábado',   fact:40,bruto:5589153, iva:447132, prop:294315, desc:19800, tot:6310800, ef:1635100, dat:2987900, qr:1680900},
+  {f:'02/08/2026',d:'Domingo',  fact:26,bruto:2788326, iva:223066, prop:152208, desc:4000, tot:3159600, ef:1265100, dat:1540500, qr:354000},
+  {f:'03/08/2026',d:'Lunes',    fact:11,bruto:1812218, iva:144977, prop:74305, desc:26200, tot:2005300, ef:799500, dat:614400, qr:591400},
+  {f:'04/08/2026',d:'Martes',   fact:18,bruto:3765548, iva:301244, prop:299509, desc:60800, tot:4305500, ef:1366700, dat:1996500, qr:942300},
+  {f:'05/08/2026',d:'Miércoles',fact:18,bruto:3201383, iva:256111, prop:168307, desc:21800, tot:3604000, ef:2091400, dat:1036600, qr:476000},
+  {f:'06/08/2026',d:'Jueves',   fact:20,bruto:3589343, iva:287147, prop:210910, desc:0, tot:4087400, ef:1076500, dat:2701600, qr:309300},
+  {f:'07/08/2026',d:'Viernes',  fact:35,bruto:6307391, iva:504591, prop:413017, desc:3400, tot:7221600, ef:787900, dat:5724900, qr:708800},
+  {f:'08/08/2026',d:'Sábado',   fact:23,bruto:4692951, iva:375436, prop:256313, desc:6400, tot:5318300, ef:228500, dat:4697000, qr:392800},
+  {f:'09/08/2026',d:'Domingo',  fact:30,bruto:4572673, iva:365814, prop:267813, desc:13700, tot:5192600, ef:1259600, dat:3425400, qr:507600},
+  {f:'10/08/2026',d:'Lunes',    fact:15,bruto:1346755, iva:107740, prop:104305, desc:10600, tot:1548200, ef:518300, dat:509900, qr:520000},
+  {f:'11/08/2026',d:'Martes',   fact:13,bruto:1866106, iva:149288, prop:184706, desc:0, tot:2200100, ef:1097400, dat:857800, qr:244900},
+  {f:'12/08/2026',d:'Miércoles',fact:10,bruto:1378329, iva:110266, prop:66004, desc:3100, tot:1551500, ef:17400, dat:1368700, qr:165400},
+  {f:'13/08/2026',d:'Jueves',   fact:17,bruto:2559993, iva:204799, prop:143308, desc:41100, tot:2867000, ef:548200, dat:2033800, qr:285000},
+  {f:'14/08/2026',d:'Viernes',  fact:23,bruto:5235360, iva:418829, prop:320471, desc:0, tot:5974660, ef:269200, dat:4164800, qr:512500},
+  {f:'15/08/2026',d:'Sábado',   fact:24,bruto:4175546, iva:334044, prop:260011, desc:14300, tot:4755300, ef:1236000, dat:3141900, qr:377400},
+  {f:'16/08/2026',d:'Domingo',  fact:39,bruto:6410355, iva:512828, prop:331717, desc:0, tot:7254900, ef:2043300, dat:4869000, qr:342600},
+  {f:'17/08/2026',d:'Lunes',    fact:38,bruto:4191100, iva:335288, prop:253212, desc:5000, tot:4774600, ef:1567000, dat:2032500, qr:1175100},
+  {f:'18/08/2026',d:'Martes',   fact:16,bruto:2822678, iva:225814, prop:94307, desc:62300, tot:3080500, ef:326000, dat:1856700, qr:897800},
+  {f:'19/08/2026',d:'Miércoles',fact:13,bruto:1525921, iva:122074, prop:124605, desc:0, tot:1772600, ef:493700, dat:855500, qr:423400},
+  {f:'20/08/2026',d:'Jueves',   fact:10,bruto:1170923, iva:93674, prop:70703, desc:0, tot:1335300, ef:339100, dat:996200, qr:0},
+  {f:'21/08/2026',d:'Viernes',  fact:22,bruto:4023046, iva:321844, prop:300611, desc:0, tot:4645500, ef:1045700, dat:2695900, qr:903900},
+  {f:'22/08/2026',d:'Sábado',   fact:15,bruto:2704901, iva:216392, prop:246507, desc:0, tot:3167800, ef:1438500, dat:1678300, qr:51000},
+  {f:'23/08/2026',d:'Domingo',  fact:42,bruto:5353320, iva:428266, prop:386814, desc:53700, tot:6114700, ef:1508100, dat:3489400, qr:1117200},
+  {f:'24/08/2026',d:'Lunes',    fact:7, bruto:907127, iva:72570, prop:44403, desc:2700, tot:1021400, ef:246000, dat:737400, qr:38000},
+  {f:'25/08/2026',d:'Martes',   fact:9, bruto:1555273, iva:124422, prop:97808, desc:0, tot:1777503, ef:531800, dat:795700, qr:0},
+  {f:'26/08/2026',d:'Miércoles',fact:4, bruto:537128, iva:42970, prop:28401, desc:11000, tot:597500, ef:0, dat:218900, qr:378600},
+  {f:'27/08/2026',d:'Jueves',   fact:13,bruto:1358699, iva:108696, prop:104905, desc:9300, tot:1563000, ef:177300, dat:1240400, qr:145300},
+  {f:'28/08/2026',d:'Viernes',  fact:29,bruto:3858972, iva:308718, prop:225411, desc:46700, tot:4346400, ef:1414600, dat:2522800, qr:409000},
+  {f:'29/08/2026',d:'Sábado',   fact:30,bruto:4211472, iva:336918, prop:238911, desc:0, tot:4787300, ef:744000, dat:2278800, qr:1764500},
+  {f:'30/08/2026',d:'Domingo',  fact:27,bruto:5074896, iva:405992, prop:395612, desc:5000, tot:5871500, ef:1829300, dat:2740500, qr:1301700},
+  {f:'31/08/2026',d:'Lunes',    fact:13,bruto:2963143, iva:237051, prop:157405, desc:70500, tot:3287100, ef:241100, dat:1282700, qr:1763700},
+];
+const agoGrupos=[['Platos Fuertes',53708201],['Comida Urbana y Noche',14313000],['Bebidas',12762200],['Sodificadas',7756200],['Entradas',5209400],['Cervezas',4622900],['Menú Infantil',2605100],['Cócteles',2205400],['Compartir y Fusión',2140200],['Postres',1639600],['Licores y Otros',942900],['Sorbetes',696600],['Porciones',529000]];
+const agoProds=[['Family Burguer',208,7467200],['Bife de Paleta',81,4446900],['Bife Chorizo',64,4153600],['Arroz Putiao del Pacífico',82,4091800],['Salmón Marinero',71,4053001],['Bife de Punta de Anca',61,3958900],['Panceta Acevichada Tropical',82,3599800],['Sodificada Maracuyá',236,3280400],['Mega Family',73,3204700],['Roulade de Pollo y Tocineta',76,3032400],['Perla del Caribe',61,2799900],['Churrasco de Pollo',68,2645200],['Alitas Coreanas',73,2474700],['Posta Cartagenera',54,2370600],['Limonada Natural',282,2227800]];
+const agoHoras=[[11,240000],[12,481500],[13,3473300],[14,14625000],[15,12888300],[16,9203000],[17,6817700],[18,7493300],[19,5966900],[20,8014300],[21,11738000],[22,23255801],[23,5517100]];
+
+// ── DATOS SEPTIEMBRE 2026 (fuente: RADIAN DIAN ✓) ──
+const sepDias = [
+  {f:'03/09/2026',d:'Jueves',   fact:9, bruto:1741571, iva:139326, prop:106409, desc:0, tot:1987305, ef:657000, dat:351400, qr:258900},
+  {f:'04/09/2026',d:'Viernes',  fact:25,bruto:3837306, iva:306984, prop:197110, desc:35000, tot:4306400, ef:1437900, dat:2593400, qr:275100},
+  {f:'05/09/2026',d:'Sábado',   fact:35,bruto:5603135, iva:448251, prop:339614, desc:13800, tot:6377200, ef:1584200, dat:4273000, qr:520000},
+  {f:'06/09/2026',d:'Domingo',  fact:33,bruto:3657952, iva:292636, prop:246812, desc:0, tot:4197400, ef:1180500, dat:2955000, qr:61900},
+  {f:'07/09/2026',d:'Lunes',    fact:6, bruto:1290089, iva:103207, prop:84504, desc:0, tot:1477800, ef:564600, dat:556600, qr:356600},
+  {f:'08/09/2026',d:'Martes',   fact:6, bruto:1215830, iva:97266, prop:101104, desc:32700, tot:1381500, ef:349900, dat:275900, qr:755700},
+  {f:'09/09/2026',d:'Miércoles',fact:10,bruto:962127, iva:76970, prop:79203, desc:23200, tot:1095100, ef:274500, dat:718000, qr:102600},
+  {f:'10/09/2026',d:'Jueves',   fact:10,bruto:1567681, iva:125414, prop:122604, desc:0, tot:1815700, ef:578900, dat:796500, qr:440300},
+  {f:'11/09/2026',d:'Viernes',  fact:20,bruto:2845454, iva:227636, prop:171009, desc:53000, tot:3191100, ef:865500, dat:1759600, qr:566000},
+  {f:'12/09/2026',d:'Sábado',   fact:27,bruto:5964063, iva:477125, prop:364712, desc:0, tot:6805900, ef:1293700, dat:1965500, qr:1656700},
+  {f:'13/09/2026',d:'Domingo',  fact:35,bruto:5109895, iva:408792, prop:378114, desc:21300, tot:5875500, ef:1134100, dat:4548300, qr:193100},
+  {f:'14/09/2026',d:'Lunes',    fact:10,bruto:1643700, iva:131496, prop:95704, desc:67100, tot:1803800, ef:39600, dat:1050400, qr:713800},
+  {f:'15/09/2026',d:'Martes',   fact:9, bruto:1792959, iva:143437, prop:136504, desc:2300, tot:2070600, ef:1103400, dat:642000, qr:325200},
+  {f:'16/09/2026',d:'Miércoles',fact:10,bruto:685091, iva:54807, prop:63602, desc:0, tot:803500, ef:180800, dat:532100, qr:90600},
+  {f:'17/09/2026',d:'Jueves',   fact:10,bruto:1277126, iva:102170, prop:114504, desc:5000, tot:1488800, ef:525000, dat:914000, qr:49800},
+  {f:'18/09/2026',d:'Viernes',  fact:31,bruto:4024530, iva:321962, prop:334910, desc:0, tot:4681402, ef:1129800, dat:2852502, qr:699100},
+  {f:'19/09/2026',d:'Sábado',   fact:33,bruto:5359897, iva:428792, prop:397911, desc:9200, tot:6177400, ef:1082000, dat:3667900, qr:1427500},
+  {f:'20/09/2026',d:'Domingo',  fact:40,bruto:6326467, iva:506117, prop:482116, desc:24100, tot:7290600, ef:2568200, dat:3973100, qr:723400},
+  {f:'21/09/2026',d:'Lunes',    fact:16,bruto:2900734, iva:232059, prop:180807, desc:39900, tot:3273700, ef:564000, dat:2709700, qr:0},
+  {f:'22/09/2026',d:'Martes',   fact:11,bruto:2175088, iva:174007, prop:114305, desc:1000, tot:2462400, ef:709500, dat:538500, qr:1214400},
+  {f:'23/09/2026',d:'Miércoles',fact:7, bruto:891200, iva:71296, prop:35603, desc:0, tot:998100, ef:150300, dat:137100, qr:710700},
+  {f:'24/09/2026',d:'Jueves',   fact:17,bruto:2903327, iva:232266, prop:162307, desc:0, tot:3297900, ef:443700, dat:1965900, qr:838500},
+  {f:'25/09/2026',d:'Viernes',  fact:22,bruto:5797303, iva:463784, prop:502412, desc:0, tot:6763500, ef:1164200, dat:4655100, qr:944200},
+  {f:'26/09/2026',d:'Sábado',   fact:22,bruto:3712213, iva:296977, prop:204110, desc:6600, tot:4206700, ef:924000, dat:2676400, qr:561400},
+  {f:'27/09/2026',d:'Domingo',  fact:37,bruto:3541750, iva:283340, prop:228910, desc:18200, tot:4035800, ef:776100, dat:2177900, qr:1081800},
+  {f:'28/09/2026',d:'Lunes',    fact:6, bruto:818609, iva:65489, prop:41202, desc:0, tot:925300, ef:353000, dat:572300, qr:0},
+  {f:'29/09/2026',d:'Martes',   fact:12,bruto:1284070, iva:102726, prop:15704, desc:25100, tot:1377400, ef:133300, dat:676200, qr:567900},
+  {f:'30/09/2026',d:'Miércoles',fact:12,bruto:2724347, iva:217948, prop:125305, desc:0, tot:3067600, ef:341600, dat:1501000, qr:1225000},
+];
+const sepGrupos=[['Platos Fuertes',43165600],['Comida Urbana Y Noche',12198800],['Bebidas',9403000],['Sodificadas',6435700],['Entradas',4901400],['Cervezas',3352600],['Postres',2345600],['Menú Infantil',1649100],['Cócteles',1640300],['Compartir y Fusión',1426800],['Licores y Otros',618600],['Porciones',374002],['Sorbetes',322500]];
+const sepProds=[['Family Burguer',142,5097800],['Bife Chorizo',54,3504600],['Sodificada Maracuyá',219,3044100],['Salmón Marinero',52,3010800],['Bife de Punta de Anca',41,2660900],['Bife de Paleta',48,2635200],['Perla del Caribe',57,2616300],['Arroz Putiao del Pacífico',51,2544900],['Juego de Tronos',68,2441200],['Roulade de Pollo y Tocineta',55,2194500],['Churrasco de Pollo',56,2178400],['Mega Family',48,2107200],['Costilla de Res Braseada',42,2053800],['Bife Bondiola',29,1936200],['Ribs de Cerdo BBQ',38,1908200]];
+const sepHoras=[[11,269000],[12,7900],[13,2944400],[14,13337000],[15,8923900],[16,5605800],[17,4727000],[18,1800600],[19,4085600],[20,8137702],[21,17801900],[22,17217000],[23,3328200]];
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ── DATOS OCTUBRE 2026 (fuente: RADIAN DIAN ✓) ──
+const octDias = [
+  {f:'01/10/2026',d:'Jueves',fact:14,bruto:2194626,iva:175570,prop:107104,desc:0,tot:2477300,ef:110900,dat:574400,qr:745000},
+  {f:'02/10/2026',d:'Viernes',fact:23,bruto:2880550,iva:230444,prop:261667,desc:0,tot:3372660,ef:639100,dat:2532100,qr:201460},
+  {f:'03/10/2026',d:'Sábado',fact:23,bruto:4420916,iva:353673,prop:320411,desc:19600,tot:5075400,ef:860600,dat:3955100,qr:259700},
+  {f:'04/10/2026',d:'Domingo',fact:37,bruto:5263227,iva:421058,prop:354315,desc:17300,tot:6021300,ef:1737000,dat:3861000,qr:423300},
+  {f:'05/10/2026',d:'Lunes',fact:18,bruto:3207029,iva:256562,prop:188908,desc:0,tot:3652500,ef:1078100,dat:2530400,qr:44000},
+  {f:'06/10/2026',d:'Martes',fact:15,bruto:1934903,iva:154792,prop:122705,desc:6800,tot:2205600,ef:660600,dat:1493000,qr:52000},
+  {f:'07/10/2026',d:'Miércoles',fact:9,bruto:1235182,iva:98815,prop:106103,desc:47900,tot:1392200,ef:474300,dat:768500,qr:149400},
+  {f:'08/10/2026',d:'Jueves',fact:14,bruto:2259902,iva:180792,prop:164706,desc:89200,tot:2516200,ef:388400,dat:1110800,qr:1017000},
+  {f:'09/10/2026',d:'Viernes',fact:9,bruto:1129256,iva:90341,prop:88603,desc:0,tot:1308200,ef:504900,dat:653300,qr:150000},
+  {f:'10/10/2026',d:'Sábado',fact:39,bruto:5700450,iva:456036,prop:426314,desc:9900,tot:6572900,ef:1985400,dat:3173500,qr:1414000},
+  {f:'11/10/2026',d:'Domingo',fact:32,bruto:4716655,iva:377332,prop:281413,desc:3500,tot:5371900,ef:745500,dat:3356100,qr:1270300},
+  {f:'12/10/2026',d:'Lunes',fact:15,bruto:2582679,iva:206614,prop:252506,desc:9800,tot:3032000,ef:708900,dat:2323100,qr:0},
+  {f:'13/10/2026',d:'Martes',fact:9,bruto:1950273,iva:156022,prop:129705,desc:0,tot:2236000,ef:464300,dat:1593300,qr:178400},
+  {f:'14/10/2026',d:'Miércoles',fact:5,bruto:779628,iva:62370,prop:47902,desc:12300,tot:877600,ef:121100,dat:628100,qr:128400},
+  {f:'15/10/2026',d:'Jueves',fact:14,bruto:1146755,iva:91740,prop:96504,desc:7300,tot:1327700,ef:342400,dat:898300,qr:87000},
+  {f:'16/10/2026',d:'Viernes',fact:17,bruto:1964161,iva:157133,prop:144207,desc:0,tot:2265500,ef:515800,dat:1322600,qr:427100},
+  {f:'17/10/2026',d:'Sábado',fact:20,bruto:2717401,iva:217392,prop:177407,desc:4600,tot:3107600,ef:344900,dat:2427200,qr:335500},
+  {f:'18/10/2026',d:'Domingo',fact:27,bruto:3569712,iva:285577,prop:299311,desc:38900,tot:4115700,ef:1251800,dat:2645100,qr:204900},
+  {f:'19/10/2026',d:'Lunes',fact:12,bruto:1173330,iva:93866,prop:88304,desc:8200,tot:1347300,ef:556700,dat:474000,qr:257700},
+  {f:'20/10/2026',d:'Martes',fact:7,bruto:691109,iva:55289,prop:25802,desc:8600,tot:763600,ef:0,dat:498400,qr:265200},
+  {f:'21/10/2026',d:'Miércoles',fact:6,bruto:665832,iva:53267,prop:54502,desc:0,tot:773600,ef:118500,dat:510400,qr:144700},
+  {f:'22/10/2026',d:'Jueves',fact:14,bruto:1687774,iva:135022,prop:147404,desc:45100,tot:1925100,ef:822000,dat:811600,qr:291500},
+  {f:'23/10/2026',d:'Viernes',fact:21,bruto:4175174,iva:334014,prop:315612,desc:5300,tot:4819500,ef:528000,dat:2886500,qr:1405000},
+  {f:'24/10/2026',d:'Sábado',fact:37,bruto:7860722,iva:628858,prop:447520,desc:219300,tot:8717800,ef:2971900,dat:4658200,qr:1087700},
+  {f:'25/10/2026',d:'Domingo',fact:37,bruto:4734339,iva:378747,prop:347114,desc:3100,tot:5457100,ef:1314100,dat:2617000,qr:1526000},
+  {f:'26/10/2026',d:'Lunes',fact:6,bruto:451480,iva:36118,prop:22602,desc:0,tot:510200,ef:3000,dat:371600,qr:135600},
+  {f:'27/10/2026',d:'Martes',fact:6,bruto:742498,iva:59400,prop:66902,desc:17000,tot:851800,ef:0,dat:611600,qr:240200},
+  {f:'28/10/2026',d:'Miércoles',fact:11,bruto:1452126,iva:116170,prop:116803,desc:0,tot:1685100,ef:61900,dat:1113500,qr:509700},
+  {f:'29/10/2026',d:'Jueves',fact:14,bruto:1747033,iva:139763,prop:150204,desc:30800,tot:2006200,ef:762600,dat:1181900,qr:61700},
+  {f:'30/10/2026',d:'Viernes',fact:23,bruto:2554715,iva:204377,prop:181508,desc:0,tot:2940600,ef:592800,dat:1732600,qr:615200},
+  {f:'31/10/2026',d:'Sábado',fact:55,bruto:6882390,iva:550591,prop:475019,desc:71100,tot:7836900,ef:1554700,dat:4754100,qr:1528100},
+];
+const octGrupos=[['Platos Fuertes',47052100],['Comida Urbana y Noche',11353900],['Bebidas',9438300],['Sodificadas',6602500],['Entradas',5201300],['Cervezas',3155500],['Cócteles',2169500],['Menú Infantil',1720800],['Compartir y Fusión',1426800],['Postres',1069300],['Sorbetes',657900],['Porciones',484500],['Licores y Otros',438500],['Desechables',354000],['Acompañamientos',58000],['Salsas',27000],['Malteada',19900]];
+const octProds=[['Bife de Punta de Anca',68,4413200],['Bife Chorizo',67,4348300],['Family Burguer',116,4164400],['Perla del Caribe',75,3442500],['Salmón Marinero',59,3416100],['Bife de Paleta',54,2964600],['Sodificada Maracuyá',213,2960700],['Arroz Putiao del Pacífico',57,2844300],['Juego de Tronos',64,2297600],['Espagueti Marinera',55,2194500],['Ribs de Cerdo BBQ',39,2102100],['Mega Family',46,2019400],['Roulade de Pollo y Tocineta',47,1875300],['Churrasco de Pollo',48,1867200],['Chuletita Valluna',31,1856900]];
+const octHoras=[[11,108600],[12,327900],[13,3845400],[14,11841100],[15,11560500],[16,8101300],[17,6995100],[18,5655900],[19,3902500],[20,8955100],[21,13248400],[22,14650300],[23,2037700]];
+
+// ── POSTRES (reporte especial) ──
+const POSTRES = {
+  '2026-01':{tot:77829500,items:[['Tropical de Lulo',44,655600],['Trifle Toscano',29,432100],['Cuchareable de Oreo',23,342700]]},
+  '2026-02':{tot:81049800,items:[['Tropical de Lulo',33,491700],['Trifle Toscano',25,372500],['Trifle (Tiramisú)',7,112000],['Cuchareable de Oreo',7,104300],['Cream Tropical(Lulo)',6,96000],['Antojo (Oreo)',1,16000]]},
+  '2026-03':{tot:92390300,items:[['Cream Tropical(Lulo)',27,432000],['Trifle (Tiramisú)',21,336000],['Antojo (Oreo)',20,320000],['Paletas',17,151300],['Vasos Especiales (OREO-M&M-MILKY) (Helado)',15,88500],['Torta Crema de Limon 8 Porciones',1,62900],['vaso Tradicional frutos (Helado)',5,22500],['Vaso + Topping (Gomas-Chips Choc) Helado',3,20700],['Vaso vainilla(Helado)',3,13500]]},
+  '2026-04':{tot:122247600,items:[['Paletas',124,1103600],['Trifle (Tiramisú)',41,656000],['Cream Tropical(Lulo)',39,624000],['Antojo (Oreo)',26,416000],['Vaso + Topping (Gomas-Chips Choc) Helado',39,269100],['Vasos Especiales (OREO-M&M-MILKY) (Helado)',31,182900],['vaso Tradicional frutos (Helado)',29,130500],['Vaso vainilla(Helado)',25,112500],['Torta Crema de Limon 8 Porciones',1,62900]]},
+  '2026-05':{tot:128641300,items:[['Paletas',75,667500],['Trifle (Tiramisú)',25,400000],['Cream Tropical(Lulo)',21,336000],['Antojo (Oreo)',10,160000],['Vasos Especiales (OREO-M&M-MILKY) (Helado)',26,153400],['vaso Tradicional frutos (Helado)',33,148500],['Vaso + Topping (Gomas-Chips Choc) Helado',14,96600],['Vaso vainilla(Helado)',21,94500],['Torta Frutos Rojos 12 Porciones',1,79900],['Torta Crema de Limon 8 Porciones',1,62900],['Decoración',1,35000]]},
+  '2026-06':{tot:154525200,items:[['Cream Tropical(Lulo)',24,384000],['Trifle (Tiramisú)',24,384000],['Paletas',42,373800],['Antojo (Oreo)',22,352000],['Vasos Especiales (OREO-M&M-MILKY) (Helado)',33,194700],['vaso Tradicional frutos (Helado)',29,130500],['Vaso + Topping (Gomas-Chips Choc) Helado',15,103500],['Vaso vainilla(Helado)',20,90000]]},
+  '2026-07':{tot:123599416,items:[['Cream Tropical(Lulo)',28,448000],['Trifle (Tiramisú)',24,384000],['Paletas',43,382700],['Antojo (Oreo)',16,256000],['Vasos Especiales (OREO-M&M-MILKY) (Helado)',32,188800],['vaso Tradicional frutos (Helado)',26,117000],['Vaso vainilla(Helado)',24,108000],['Vaso + Topping (Gomas-Chips Choc) Helado',6,41400]]},
+  '2026-08':{tot:109714201,items:[['Decoración',22,770000],['Antojo (Oreo)',27,432000],['Paletas',15,133500],['Vasos Especiales (OREO-M&M-MILKY) (Helado)',15,88500],['Cream Tropical(Lulo)',5,80000],['Vaso vainilla(Helado)',13,58500],['vaso Tradicional frutos (Helado)',11,49500],['Vaso + Topping (Gomas-Chips Choc) Helado',4,27600]]},
+  '2026-09':{tot:88186002,items:[['Decoración',36,1260000],['Cheesecake de Maracuyá',14,224000],['Cheesecake de Frutos del Bosque',12,192000],['Cheesecake de Oreo',11,176000],['Premium Family Popsy Picolé',10,149000],['Fun Size Cup Frutos del Bosque Gourmet',7,69300],['Fun Size Cup Chocolate Gourmet',6,59400],['Fun Size Cup Vainilla Gourmet',4,39600],['Fun Size Cup Oreo',4,39600],['Premium Sundae Bowl Mandarina y Leche Condensada',3,32700],['Premium Sundae Bowl Vainilla Chocolate',3,32700],['Fun Size Cup M&M',3,29700],['Premium Sundae Bowl Vainilla Frambuesa',2,21800],['Fun Size Cup MilkyWay Gourmet',2,19800]]},
+  '2026-10':{tot:91229800,items:[['Cheesecake de Maracuyá',12,192000],['Premium Family Popsy Picolé',12,178800],['Cheesecake de Frutos del Bosque',8,128000],['Fun Size Cup Chocolate Gourmet',10,99000],['Cheesecake de Oreo',6,96000],['Fun Size Cup Frutos del Bosque Gourmet',8,79200],['Fun Size Cup Vainilla Gourmet',8,79200],['Premium Sundae Bowl Mandarina y Leche Condensada',5,54500],['Premium Sundae Bowl Vainilla Chocolate',5,54500],['Premium Sundae Bowl Vainilla Frambuesa',4,43600],['Fun Size Cup MilkyWay Gourmet',3,29700],['Postre Coctel "boff"',1,24900],['Fun Size Cup Oreo',1,9900]]},
+};
+
+// ── BEBIDAS (reporte especial) ──
+const BEBIDAS = {
+  '2026-01':{tot:77829500,items:[['Sodificada Maracuya-Mandarina','Sodificadas',149,2071100],['Limonada Natural','Bebidas',207,1635300],['Limonada Cerezada','Bebidas',141,1395900],['Agua Mineral','Bebidas',175,1382500],['Limonada de Coco','Bebidas',96,1142400],['Club Colombia','Cervezas',111,1098900],['Coca Cola Normal','Bebidas',147,1014300],['Sodificada Lulo-Kiwi','Sodificadas',66,917400],['Corona','Cervezas',72,856800],['Soda','Bebidas',95,719900],['Limonada Hierbabuena','Bebidas',62,613800],['Americano','Bebidas',114,570000],['Sodificada de Tamarindo','Sodificadas',38,528200],['Coca Cola Zero','Bebidas',74,510600],['Sodificada Piña- Jengibre','Sodificadas',36,500400],['Stella Artois','Cervezas',36,464400],['Sodificada Bayas Silvestres','Sodificadas',31,430900],['Sorbete de Curuba-Banano','Sorbetes',25,322500],['Sorbete de Guanabana y Miel','Sorbetes',23,296700],['Capucchino','Bebidas',33,280500],['Mojito','Cócteles',11,275000],['Golden Smoke','Cócteles',7,266000],['Canada Dry (Ginger)','Bebidas',33,227700],['Limonada Evento','Bebidas',32,220800],['Gin & Tonic','Cócteles',7,210000],['Zumo Limon','Bebidas',105,210000],['Aperol Spritz','Cócteles',5,175000],['Michelada','Cervezas',35,175000],['Sorbete Guayaba y Feijoa','Sorbetes',13,167700],['Escarchada','Cervezas',53,159000],['Sodificada Melon - Limon','Sodificadas',11,152900],['Tamarindo al Fuego','Cócteles',5,150000],['Margarita','Cócteles',5,139500],['Agua con Gas','Bebidas',18,132200],['Johnnie Walker Red Label','Licores y Otros',1,120000],['Sorbete de Borojo','Sorbetes',9,116100],['Humo y Raices','Cócteles',2,78000],['Red Bull Energy Drink','Bebidas',4,42600],['Botanica Sagrada','Cócteles',1,38000],['Tiki','Cócteles',1,34900],['Sol y Pulpa','Cócteles',1,33000],['Moscow Mule','Cócteles',1,30000],['Cerveza Estrella Galicia','Cervezas',2,29800],['Shot de Tequila','Licores y Otros',1,16000],['Agua Sin Gas','Bebidas',1,7900]]},
+  '2026-02':{tot:81049800,items:[['Sodificada Maracuya-Mandarina','Sodificadas',136,1890400],['Limonada Natural','Bebidas',196,1548400],['Agua Mineral','Bebidas',161,1271900],['Limonada Cerezada','Bebidas',117,1158300],['Club Colombia','Cervezas',107,1059300],['Soda','Bebidas',134,1058600],['Coca Cola Normal','Bebidas',152,1048800],['Golden Smoke','Cócteles',26,986400],['Corona','Cervezas',79,940100],['Limonada de Coco','Bebidas',79,940100],['Americano','Bebidas',130,650000],['Limonada Hierbabuena','Bebidas',61,603900],['Sodificada de Tamarindo','Sodificadas',41,569900],['Sodificada Lulo-Kiwi','Sodificadas',39,542100],['Sodificada Piña- Jengibre','Sodificadas',37,514300],['Coca Cola Zero','Bebidas',68,469200],['Sorbete de Curuba-Banano','Sorbetes',36,464400],['Sodificada Bayas Silvestres','Sodificadas',32,444800],['Agua con Gas','Bebidas',46,363400],['Sorbete de Guanabana y Miel','Sorbetes',28,361200],['Capucchino','Bebidas',34,290200],['Johnnie Walker Red Label','Licores y Otros',2,279800],['Zumo Limon','Bebidas',134,268000],['Sorbete de Borojo','Sorbetes',20,258000],['Stella Artois','Cervezas',16,206400],['Mojito','Cócteles',8,199800],['Escarchada','Cervezas',61,183000],['Aperol Spritz','Cócteles',5,174600],['Canada Dry (Ginger)','Bebidas',25,172500],['Sorbete Guayaba y Feijoa','Sorbetes',13,167700],['Sodificada Melon - Limon','Sodificadas',11,152900],['Michelada','Cervezas',22,110000],['Tinto Verano','Cócteles',4,99600],['Tangarindo','Cócteles',2,66000],['Sol y Pulpa','Cócteles',2,66000],['Cerveza Estrella Galicia','Cervezas',4,59600],['Margarita','Cócteles',2,55800],['Margarita Premium','Cócteles',1,43900],['Humo y Raices','Cócteles',1,39000],['Beso Escarlata','Cócteles',1,35000],['Tamarindo al Fuego','Cócteles',1,30000],['Gin & Tonic','Cócteles',1,29900],['Red Bull Red Edition','Bebidas',2,25800],['Agua Sin Gas','Bebidas',3,23700],['Copa de Sangria','Licores y Otros',1,20000],['Shot de Tequila','Licores y Otros',1,16000],['Red Bull Energy Drink','Bebidas',1,10900]]},
+  '2026-03':{tot:92390300,items:[['Sodificada Maracuya-Mandarina','Sodificadas',176,2446400],['Limonada Natural','Bebidas',242,1911800],['Agua Mineral','Bebidas',197,1556300],['Coca Cola Normal','Bebidas',223,1538700],['Limonada Cerezada','Bebidas',144,1425600],['Club Colombia','Cervezas',122,1207800],['Corona','Cervezas',98,1166200],['Limonada de Coco','Bebidas',92,1094800],['Stella Artois','Cervezas',84,1083600],['Sodificada Lulo-Kiwi','Sodificadas',69,959100],['Soda','Bebidas',108,853200],['Sodificada de Tamarindo','Sodificadas',42,583800],['Limonada Hierbabuena','Bebidas',55,544500],['Sodificada Bayas Silvestres','Sodificadas',36,500400],['Golden Smoke','Cócteles',13,492700],['Mojito','Cócteles',19,473100],['Coca Cola Zero','Bebidas',67,462300],['Sodificada Piña- Jengibre','Sodificadas',32,444800],['Sorbete de Guanabana y Miel','Sorbetes',30,387000],['Americano','Bebidas',68,340000],['Agua con Gas','Bebidas',43,339700],['Tamarindo al Fuego','Cócteles',11,328900],['Sorbete de Borojo','Sorbetes',25,322500],['Sorbete de Curuba-Banano','Sorbetes',24,309600],['Capucchino','Bebidas',33,293700],['Tinto Verano','Cócteles',9,224100],['Margarita','Cócteles',8,223200],['Canada Dry (Ginger)','Bebidas',32,220800],['Michelada','Cervezas',44,220000],['Tiki','Cócteles',6,209400],['Zumo Limon','Bebidas',104,208000],['Sorbete Guayaba y Feijoa','Sorbetes',13,167700],['Sol y Pulpa','Cócteles',5,165000],['Moscow Mule','Cócteles',5,149500],['Escarchada','Cervezas',49,147000],['Sodificada Melon - Limon','Sodificadas',10,139000],['Tangarindo','Cócteles',4,132000],['Margarita Premium','Cócteles',3,131700],['Vino Rosado Rose','Licores y Otros',1,70000],['Beso Escarlata','Cócteles',2,69800],['Copa de Vino','Licores y Otros',3,48000],['Copa de Sangria','Licores y Otros',2,40000],['Botanica Sagrada','Cócteles',1,37900],['Aperol Spritz','Cócteles',1,34900],['Ocaso Tropical','Cócteles',1,34900],['Shot de Tequila Don Julio Blanco','Licores y Otros',1,32000],['Aromatica','Bebidas',5,25000],['Shot de Wiskey','Licores y Otros',1,23500],['Red Bull Red Edition','Bebidas',1,12900],['Red Bull Sugarfree','Bebidas',1,9900],['Agua Sin Gas','Bebidas',1,7900]]},
+  '2026-04':{tot:122247600,items:[['Limonada Natural','Bebidas',492,3886800],['Sodificada Maracuya-Mandarina','Sodificadas',186,2585400],['Club Colombia','Cervezas',211,2088900],['Limonada Cerezada','Bebidas',167,1653300],['Corona','Cervezas',129,1535100],['Coca Cola Normal','Bebidas',203,1400700],['Agua Mineral','Bebidas',166,1311400],['Sodificada Lulo-Kiwi','Sodificadas',89,1237100],['Sodificada de Tamarindo','Sodificadas',86,1195400],['Limonada de Coco','Bebidas',100,1190000],['Soda','Bebidas',125,987500],['Limonada Hierbabuena','Bebidas',91,900900],['Sodificada Bayas Silvestres','Sodificadas',64,889600],['Stella Artois','Cervezas',66,851400],['Coca Cola Zero','Bebidas',107,738300],['Sodificada Piña- Jengibre','Sodificadas',44,611600],['Americano','Bebidas',101,505000],['Golden Smoke','Cócteles',13,492700],['Agua con Gas','Bebidas',52,410800],['Sorbete de Guanabana y Miel','Sorbetes',27,348300],['Sorbete de Borojo','Sorbetes',26,335400],['Malteada 12 Onz','Malteada',15,259500],['Canada Dry (Ginger)','Bebidas',34,234600],['Zumo Limon','Bebidas',114,228000],['Capucchino','Bebidas',25,222500],['Sorbete de Curuba-Banano','Sorbetes',17,219300],['Michelada','Cervezas',40,200000],['Escarchada','Cervezas',64,192000],['Moscow Mule','Cócteles',6,179400],['Tinto Verano','Cócteles',7,174300],['Sorbete Guayaba y Feijoa','Sorbetes',12,154800],['Smirnoff Apple','Licores y Otros',9,135000],['Agua Sin Gas','Bebidas',17,134300],['Shot de Tequila Don Julio Blanco','Licores y Otros',4,128000],['Mojito','Cócteles',5,124500],['Smirnoff Red','Licores y Otros',10,120000],['Aperol Spritz','Cócteles',3,104700],['Granizado de Mango Biche','Bebidas',6,101400],['Sol y Pulpa','Cócteles',3,99000],['Margarita','Cócteles',3,83700],['Malteada 16 Onz','Malteada',4,79600],['Tiki','Cócteles',2,69800],['Copa de Sangria','Licores y Otros',3,60000],['Tamarindo al Fuego','Cócteles',2,59800],['Beso Escarlata','Cócteles',1,34900],['Tangarindo','Cócteles',1,33000],['Aromatica','Bebidas',6,30000],['Red Bull Red Edition','Bebidas',1,12900],['Red Bull Energy Drink','Bebidas',1,10900]]},
+  '2026-05':{tot:128641300,items:[['Sodificada Maracuya-Mandarina','Sodificadas',283,3933700],['Limonada Cerezada','Bebidas',199,1970100],['Coca Cola Normal','Bebidas',270,1863000],['Agua Mineral','Bebidas',214,1690600],['Club Colombia','Cervezas',156,1544400],['Limonada Natural','Bebidas',194,1532600],['Sodificada de Tamarindo','Sodificadas',110,1529000],['Soda','Bebidas',172,1358800],['Sodificada Lulo-Kiwi','Sodificadas',94,1306600],['Corona','Cervezas',96,1142400],['Limonada de Coco','Bebidas',92,1094800],['Stella Artois','Cervezas',64,825600],['Limonada Hierbabuena','Bebidas',82,811800],['Sodificada Bayas Silvestres','Sodificadas',57,792300],['Copa de Sangria','Licores y Otros',33,660000],['Granizado de Mango Biche','Bebidas',39,659100],['Sodificada Piña- Jengibre','Sodificadas',44,611600],['Coca Cola Zero','Bebidas',87,600300],['Margarita','Cócteles',21,585900],['Agua con Gas','Bebidas',57,450300],['Tinto Verano','Cócteles',18,448200],['Americano','Bebidas',73,365000],['Canada Dry (Ginger)','Bebidas',49,338100],['Golden Smoke','Cócteles',8,303200],['Zumo Limon','Bebidas',147,294000],['Sorbete de Guanabana y Miel','Sorbetes',22,283800],['Sorbete de Borojo','Sorbetes',19,245100],['Beso Escarlata','Cócteles',7,244300],['Bruma de Durazno','Cócteles',7,237300],['Gin & Tonic','Cócteles',7,209300],['Sorbete de Curuba-Banano','Sorbetes',13,167700],['Michelada','Cervezas',32,160000],['Sorbete Guayaba y Feijoa','Sorbetes',12,154800],['Vino Chardonay','Licores y Otros',2,150000],['Vino Frontera Carmenere','Licores y Otros',2,150000],['Moscow Mule','Cócteles',5,149500],['Mojito','Cócteles',6,149400],['Escarchada','Cervezas',47,141000],['Tangarindo','Cócteles',4,132000],['Malteada 16 Onz','Malteada',6,119400],['Copa de Vino','Licores y Otros',7,112000],['Aperol Spritz','Cócteles',3,104700],['Capucchino','Bebidas',11,97900],['Vino Frontera Cabernet Souvignon','Licores y Otros',1,75000],['Ember Bloom','Cócteles',2,71800],['Aromatica','Bebidas',11,55000],['Luna Roja','Cócteles',2,49800],['Shot de Tequila Don Julio Blanco','Licores y Otros',1,32000],['Smirnoff Apple','Licores y Otros',2,30000],['Smirnoff Red','Licores y Otros',2,24000],['Shot de Wiskey','Licores y Otros',1,23500],['Red Bull Energy Drink','Bebidas',2,21800],['Agua Sin Gas','Bebidas',2,15800]]},
+  '2026-06':{tot:154525200,items:[['Sodificada Maracuya-Mandarina','Sodificadas',217,3016300],['Corona','Cervezas',250,2975000],['Limonada Natural','Bebidas',364,2875600],['Limonada Cerezada','Bebidas',234,2316600],['Club Colombia','Cervezas',222,2197800],['Coca Cola Normal','Bebidas',288,1987200],['Agua Mineral','Bebidas',226,1785400],['Sodificada de Tamarindo','Sodificadas',91,1264900],['Stella Artois','Cervezas',91,1173900],['Sodificada Lulo-Kiwi','Sodificadas',84,1167600],['Limonada de Coco','Bebidas',90,1071000],['Soda','Bebidas',134,1058600],['Vino Frontera Carmenere','Licores y Otros',12,900000],['Sodificada Bayas Silvestres','Sodificadas',64,889600],['Sodificada Piña- Jengibre','Sodificadas',55,764500],['Limonada Hierbabuena','Bebidas',66,653400],['Coca Cola Zero','Bebidas',82,565800],['Granizado de Mango Biche','Bebidas',27,456300],['Americano','Bebidas',82,410000],['Golden Smoke','Cócteles',10,379000],['Aguardiente Amarillo Botella','Aguardientes',3,332700],['Sorbete de Guanabana y Miel','Sorbetes',25,322500],['Buchannans Deluxe','Licores y Otros',1,280900],['Tinto Verano','Cócteles',10,249000],['Mojito','Cócteles',10,249000],['Agua con Gas','Bebidas',30,237000],['Zumo Limon','Bebidas',112,224000],['Copa de Sangria','Licores y Otros',11,220000],['Agua Sin Gas','Bebidas',26,205400],['Canada Dry (Ginger)','Bebidas',29,200100],['Margarita','Cócteles',7,195300],['Capucchino','Bebidas',20,178000],['Tiki','Cócteles',5,174500],['Escarchada','Cervezas',55,165000],['Moscow Mule','Cócteles',5,149500],['Beso Escarlata','Cócteles',4,139600],['Tangarindo','Cócteles',4,132000],['Shot de Tequila Don Julio Blanco','Licores y Otros',4,128000],['Sorbete de Curuba-Banano','Sorbetes',8,103200],['Sorbete de Borojo','Sorbetes',8,103200],['Luna Roja','Cócteles',4,99600],['Vino Reserve Malbec','Licores y Otros',1,90000],['Michelada','Cervezas',16,80000],['Malteada 16 Onz','Malteada',4,79600],['Sorbete Guayaba y Feijoa','Sorbetes',6,77400],['Vino Rosado Rose','Licores y Otros',1,75000],['Aperol Spritz','Cócteles',2,69800],['Bruma de Durazno','Cócteles',2,67800],['Gin & Tonic','Cócteles',2,59800],['Granizado de Naranja','Bebidas',3,50700],['Copa de Vino','Licores y Otros',3,48000],['Cerveza Estrella Galicia','Cervezas',3,44700],['Aromatica','Bebidas',8,40000],['Ember Bloom','Cócteles',1,35900],['Sodificada Melon - Limon','Sodificadas',1,13900],['Red Bull Energy Drink','Bebidas',1,10900]]},
+  '2026-07':{tot:123599416,items:[['Sodificada Maracuya-Mandarina','Sodificadas',226,3141400],['Limonada Natural','Bebidas',348,2749200],['Club Colombia','Cervezas',241,2385900],['Corona','Cervezas',199,2368100],['Coca Cola Normal','Bebidas',299,2063100],['Limonada Cerezada','Bebidas',181,1791900],['Agua Mineral','Bebidas',212,1674800],['Soda','Bebidas',190,1501000],['Sodificada Lulo-Kiwi','Sodificadas',100,1390000],['Sodificada de Tamarindo','Sodificadas',90,1251000],['Limonada de Coco','Bebidas',100,1190000],['Stella Artois','Cervezas',91,1173900],['Limonada Hierbabuena','Bebidas',101,999900],['Sodificada Bayas Silvestres','Sodificadas',68,945200],['Coca Cola Zero','Bebidas',104,717600],['Sodificada Piña- Jengibre','Sodificadas',48,667200],['Granizado de Mango Biche','Bebidas',38,642200],['Sorbete de Guanabana y Miel','Sorbetes',40,516000],['Agua con Gas','Bebidas',59,466100],['Mojito','Cócteles',15,373500],['Tangarindo','Cócteles',11,363000],['Copa de Sangria','Licores y Otros',15,300000],['Sorbete de Curuba-Banano','Sorbetes',23,296700],['Canada Dry (Ginger)','Bebidas',42,289800],['Tiki','Cócteles',8,279200],['Americano','Bebidas',51,255000],['Escarchada','Cervezas',82,246000],['Zumo Limon','Bebidas',120,240000],['Malteada 16 Onz','Malteada',11,218900],['Sorbete de Borojo','Sorbetes',16,206400],['Michelada','Cervezas',34,170000],['Vino Frontera Merlot','Licores y Otros',2,150000],['Vino Rosado Rose','Licores y Otros',2,150000],['Ember Bloom','Cócteles',4,143600],['Margarita','Cócteles',5,139500],['Luna Roja','Cócteles',5,124500],['Gin & Tonic','Cócteles',4,119600],['Agua Sin Gas','Bebidas',14,110600],['Capucchino','Bebidas',12,106800],['Aperol Spritz','Cócteles',3,104700],['Vino Frontera Carmenere','Licores y Otros',1,75000],['Tinto Verano','Cócteles',3,74700],['Bruma de Durazno','Cócteles',2,67800],['Sorbete Guayaba y Feijoa','Sorbetes',5,64500],['Moscow Mule','Cócteles',2,59800],['Botanica Sagrada','Cócteles',1,37900],['Golden Smoke','Cócteles',1,37900],['Copa de Vino','Licores y Otros',2,32000],['Red Bull Sugarfree','Bebidas',3,29700],['Granizado de Naranja','Bebidas',1,16900],['Aromatica','Bebidas',3,15000],['Sodificada Melon - Limon','Sodificadas',1,13900],['Sodificada Pluria','Bebidas',1,9000]]},
+  '2026-08':{tot:109714201,items:[['Sodificada Maracuya-Mandarina','Sodificadas',236,3280400],['Limonada Natural','Bebidas',282,2227800],['Coca Cola Normal','Bebidas',257,1773300],['Sodificada Lulo-Kiwi','Sodificadas',120,1668000],['Club Colombia','Cervezas',163,1613700],['Agua Mineral','Bebidas',204,1611600],['Corona','Cervezas',130,1547000],['Limonada Cerezada','Bebidas',153,1514700],['Limonada de Coco','Bebidas',100,1190000],['Sodificada de Tamarindo','Sodificadas',84,1167600],['Stella Artois','Cervezas',88,1135200],['Soda','Bebidas',128,1011200],['Sodificada Bayas Silvestres','Sodificadas',71,986900],['Coca Cola Zero','Bebidas',132,910800],['Limonada Hierbabuena','Bebidas',86,851400],['Sodificada Piña- Jengibre','Sodificadas',47,653300],['Tangarindo','Cócteles',13,429000],['Vino Trivento Malbec Reserve','Licores y Otros',4,420000],['Granizado de Mango Biche','Bebidas',23,388700],['Agua con Gas 600ml','Bebidas',49,387100],['Canada Dry (Ginger)','Bebidas',55,379500],['Tiki','Cócteles',10,349000],['Copa de Sangria','Licores y Otros',14,280000],['Zumo Limon','Bebidas',136,272000],['Bruma de Durazno','Cócteles',8,271200],['Sorbete de Guanabana y Miel','Sorbetes',19,245100],['Aperol Spritz','Cócteles',7,244300],['Sorbete de Curuba-Banano','Sorbetes',17,219300],['Sorbete de Borojo','Sorbetes',17,219300],['Mojito','Cócteles',8,199200],['Margarita','Cócteles',7,195300],['Moscow Mule','Cócteles',6,179400],['Americano','Bebidas',33,165000],['Michelada','Cervezas',33,165000],['Escarchada','Cervezas',54,162000],['Botanica Sagrada','Cócteles',4,151600],['Malteada 16 Onz','Malteada',5,99500],['Copa de Vino Tinto Merlot','Licores y Otros',6,96000],['Golden Smoke','Cócteles',2,75800],['Vino Frontera Cabernet Souvignon','Licores y Otros',1,75000],['Tinto Verano','Cócteles',3,74700],['Capucchino','Bebidas',8,71200],['Vino Rosado Espumoso Gb','Licores y Otros',1,39900],['Ember Bloom','Cócteles',1,35900],['Shot de Tequila Don Julio Blanco','Licores y Otros',1,32000],['Sorbete Guayaba y Feijoa','Sorbetes',1,12900],['Agua Sin Gas','Bebidas',1,7900]]},
+  '2026-09':{tot:88186002,items:[['Sodificada Maracuya-Mandarina','Sodificadas',219,3044100],['Coca Cola Normal','Bebidas',244,1683600],['Limonada Natural','Bebidas',183,1445700],['Limonada Cerezada','Bebidas',130,1287000],['Corona','Cervezas',101,1201900],['Sodificada Lulo-Kiwi','Sodificadas',86,1195400],['Agua Mineral','Bebidas',140,1106000],['Club Colombia','Cervezas',108,1069200],['Sodificada de Tamarindo','Sodificadas',69,959100],['Stella Artois','Cervezas',65,838500],['Limonada de Coco','Bebidas',69,821100],['Soda','Bebidas',98,774200],['Sodificada Bayas Silvestres','Sodificadas',55,764500],['Limonada Hierbabuena','Bebidas',71,702900],['Coca Cola Zero','Bebidas',96,662400],['Sodificada Piña- Jengibre','Sodificadas',34,472600],['Mojito','Cócteles',17,423300],['Granizado de Mango Biche','Bebidas',19,321100],['Margarita','Cócteles',10,279000],['Tangarindo','Cócteles',7,231000],['Vino Frontera Carmenere','Licores y Otros',3,225000],['Premium coctel party aperol spritz','Cócteles',5,199500],['Agua con Gas 600ml','Bebidas',23,181700],['Sorbete de Guanabana y Miel','Sorbetes',14,180600],['Escarchada','Cervezas',56,168000],['Canada Dry (Ginger)','Bebidas',24,165600],['Copa de Sangria','Licores y Otros',4,163600],['Vino Frontera Merlot','Licores y Otros',2,150000],['Zumo Limon','Bebidas',73,146000],['Sorbete de Borojo','Sorbetes',9,116100],['Golden Smoke','Cócteles',3,113700],['Tiki','Cócteles',3,104700],['Moscow Mule','Cócteles',3,89700],['Michelada','Cervezas',15,75000],['Beso Escarlata','Cócteles',2,69800],['Aperol Spritz','Cócteles',2,69800],['Gin & Tonic','Cócteles',2,59800],['Agua Sin Gas','Bebidas',7,55300],['Copa de Vino Tinto Merlot','Licores y Otros',3,48000],['Caja Hatsu','Bebidas',6,41400],['Shot de Tequila Don Julio Blanco','Licores y Otros',1,32000],['Sorbete de Curuba-Banano','Sorbetes',2,25800],['Sodificada Pluria','Bebidas',1,9000]]},
+  '2026-10':{tot:91229800,items:[['Sodificada Maracuya-Mandarina','Sodificadas',213,2960700],['Corona','Cervezas',133,1582700],['Limonada Natural','Bebidas',196,1548400],['Coca Cola Normal','Bebidas',210,1449000],['Limonada Cerezada','Bebidas',144,1425600],['Agua Mineral','Bebidas',170,1343000],['Sodificada Lulo-Kiwi','Sodificadas',95,1320500],['Sodificada de Tamarindo','Sodificadas',78,1084200],['Soda','Bebidas',115,908500],['Club Colombia','Cervezas',83,821700],['Coca Cola Zero','Bebidas',118,814200],['Sodificada Bayas Silvestres','Sodificadas',52,722800],['Sodificada Piña- Jengibre','Sodificadas',37,514300],['Stella Artois','Cervezas',39,503100],['Limonada Hierbabuena','Bebidas',41,405900],['Tiki','Cócteles',10,349000],['Agua con Gas 600ml','Bebidas',42,331800],['Aperol Spritz','Cócteles',9,314100],['Sorbete de Curuba-Banano','Sorbetes',24,309600],['Moscow Mule','Cócteles',10,299000],['Gin & Tonic','Cócteles',10,299000],['Limonada de Coco','Bebidas',25,297500],['Canada Dry (Ginger)','Bebidas',41,282900],['Mojito','Cócteles',10,249000],['Copa de Vino Tinto Merlot','Licores y Otros',14,224000],['Sorbete de Borojo','Sorbetes',17,219300],['Zumo Limon','Bebidas',105,210000],['Escarchada','Cervezas',66,198000],['Tangarindo','Cócteles',6,198000],['Granizado de Mango Biche','Bebidas',11,185900],['Tinto Verano','Cócteles',7,174300],['Copa de Sangria','Licores y Otros',5,139500],['Sorbete de Guanabana y Miel','Sorbetes',10,129000],['Margarita','Cócteles',4,111600],['Americano','Bebidas',18,108000],['Ember Bloom','Cócteles',3,107700],['Caja Hatsu','Bebidas',13,89700],['Vino Rosado Rose','Licores y Otros',1,75000],['Bruma de Durazno','Cócteles',2,67800],['Michelada','Cervezas',10,50000],['Aromatica','Bebidas',6,30000],['Malteada 16 Onz','Malteada',1,19900],['Agua Sin Gas','Bebidas',1,7900]]},
+};
+
+// ── BUILD STORE ──
+let STORE = { meses: [
+  {ano:2025,mes:11,label:'Nov 2025',dias:novDias,grupos:novGrupos,productos:novProds,horas:novHoras},
+  {ano:2025,mes:12,label:'Dic 2025',dias:dicDias,grupos:dicGrupos,productos:dicProds,horas:dicHoras},
+  {ano:2026,mes:1, label:'Ene 2026',dias:eneDias,grupos:eneGrupos,productos:eneProds,horas:eneHoras},
+  {ano:2026,mes:2, label:'Feb 2026',dias:febDias,grupos:febGrupos,productos:febProds,horas:febHoras},
+  {ano:2026,mes:3, label:'Mar 2026',dias:marDias,grupos:marGrupos,productos:marProds,horas:marHoras},
+  {ano:2026,mes:4, label:'Abr 2026',dias:abrDias,grupos:abrGrupos,productos:abrProds,horas:abrHoras},
+  {ano:2026,mes:5, label:'May 2026',dias:mayDias,grupos:mayGrupos,productos:mayProds,horas:mayHoras},
+  {ano:2026,mes:6, label:'Jun 2026',dias:junDias,grupos:junGrupos,productos:junProds,horas:junHoras},
+  {ano:2026,mes:7, label:'Jul 2026',dias:julDias,grupos:julGrupos,productos:julProds,horas:julHoras},
+  {ano:2026,mes:8, label:'Ago 2026',dias:agoDias,grupos:agoGrupos,productos:agoProds,horas:agoHoras},
+  {ano:2026,mes:9, label:'Sep 2026',dias:sepDias,grupos:sepGrupos,productos:sepProds,horas:sepHoras},
+  {ano:2026,mes:10,label:'Oct 2026',dias:octDias,grupos:octGrupos,productos:octProds,horas:octHoras},
+]};
+
+// ── SELECTED COMPARE MONTHS ──
+let cmpSelected = [0,1];
+
+// ── STATE ──
+let currentPage = 'graficas';
+let charts = {};
+
+// ── FORMAT ──
+const fmtM = v => '$'+Math.round(v).toLocaleString('es-CO');
+const fmtC = v => '$'+Math.round(v).toLocaleString('es-CO');
+const gc = 'rgba(0,0,0,0.06)';
+
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+Chart.defaults.color = '#4a5568';
+
+function destroyChart(id){ if(charts[id]){ charts[id].destroy(); delete charts[id]; } }
+
+// ── NAVIGATION ──
+function goPage(p){
+  currentPage = p;
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(el=>{ if(el.textContent.toLowerCase().includes(p==='graficas'?'gráf':p==='tabla'?'tabla':p==='postres'?'postres':p==='bebidas'?'bebidas':'comp')) el.classList.add('active'); });
+  if(p==='comparar') renderCompare();
+  if(p==='postres') renderPostres();
+  if(p==='bebidas') renderBebidas();
+  syncFilters();
+}
+
+// ── FILTERS ──
+function buildFilters(){
+  const meses = STORE.meses;
+  ['selMes','t-selMes'].forEach(id=>{
+    const s = document.getElementById(id); if(!s) return;
+    s.innerHTML = '<option value="todos">Todos los períodos</option>' + meses.map(m=>`<option value="${m.mes},${m.ano}">${m.label}</option>`).join('');
+    // Default: most recent month
+    const last = meses[meses.length-1];
+    s.value = `${last.mes},${last.ano}`;
+  });
+  syncFilters();
+}
+
+function getFiltered(){
+  const mes = document.getElementById('selMes')?.value || 'todos';
+  const dia = document.getElementById('selDia')?.value || 'todos';
+
+  let filtered = STORE.meses.filter(m=>{
+    if(mes!=='todos'){const[mm,aa]=mes.split(','); if(String(m.mes)!==mm||String(m.ano)!==aa) return false;}
+    return true;
+  });
+
+  const dias = filtered.flatMap(m=>m.dias).filter(d=>dia==='todos'||d.d===dia);
+  const grupos = mergeGrupos(filtered.map(m=>m.grupos));
+  const productos = mergeProductos(filtered.map(m=>m.productos));
+  const horas = mergeHoras(filtered.map(m=>m.horas));
+  return {dias, grupos, productos, horas, meses:filtered};
+}
+
+function syncFilters(){
+  // sync label
+  const lbl = document.getElementById('period-label');
+  if(lbl){ const {dias}=getFiltered(); lbl.textContent = `${dias.length} días seleccionados`; }
+}
+
+function applyFilters(){
+  syncFilters();
+  const mes = document.getElementById('selMes')?.value;
+  const tMes = document.getElementById('t-selMes')?.value;
+  // keep in sync between pages
+  if(currentPage==='graficas') renderGraficas();
+  else if(currentPage==='tabla') renderTabla();
+  else renderCompare();
+}
+
+function mergeGrupos(arr){
+  const m={}; arr.flat().forEach(([n,v])=>{ m[n]=(m[n]||0)+v; });
+  return Object.entries(m).sort((a,b)=>b[1]-a[1]);
+}
+function mergeProductos(arr){
+  const m={}; arr.flat().forEach(([n,u,v])=>{ if(!m[n]) m[n]=[n,0,0]; m[n][1]+=u; m[n][2]+=v; });
+  return Object.values(m).sort((a,b)=>b[2]-a[2]).slice(0,15);
+}
+function mergeHoras(arr){
+  const m={}; arr.flat().forEach(([h,v])=>{ m[h]=(m[h]||0)+v; });
+  return Object.keys(m).sort((a,b)=>+a-+b).map(h=>[+h,m[h]]);
+}
+
+// ── KPIs ──
+function renderKPIs(dias, container){
+  const sum = k => dias.reduce((a,d)=>a+d[k],0);
+  const tot=sum('tot'), bruto=sum('bruto'), iva=sum('iva'), prop=sum('prop'), desc=sum('desc');
+  const fact=sum('fact'), ef=sum('ef'), dat=sum('dat'), qr=sum('qr');
+  const ticket = fact?Math.round(tot/fact):0;
+  const digital = (dat+qr);
+
+  document.getElementById(container).innerHTML = `
+    <div class="kpi-card" style="--accent-dim:${PALETTE[0]}15">
+      <div class="kpi-label">Total cobrado</div>
+      <div class="kpi-val">${fmtM(tot)}</div>
+      <div class="kpi-sub">${dias.length} días · ${fact} facturas</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Venta neta</div>
+      <div class="kpi-val">${fmtM(bruto)}</div>
+      <div class="kpi-sub">Base gravable impoconsumo</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Impoconsumo</div>
+      <div class="kpi-val">${fmtM(iva)}</div>
+      <div class="kpi-sub">${bruto?(iva/bruto*100).toFixed(2):0}% de venta neta</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Propina</div>
+      <div class="kpi-val">${fmtM(prop)}</div>
+      <div class="kpi-sub">${bruto?(prop/bruto*100).toFixed(1):0}% de venta neta</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Descuentos</div>
+      <div class="kpi-val">${fmtM(desc)}</div>
+      <div class="kpi-sub">${bruto?(desc/bruto*100).toFixed(1):0}% de venta neta</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Ticket promedio</div>
+      <div class="kpi-val">${fmtM(ticket)}</div>
+      <div class="kpi-sub">Digital ${tot?(digital/tot*100).toFixed(0):0}%</div>
+    </div>
+  `;
+}
+
+// ── GRÁFICAS PAGE ──
+function renderGraficas(){
+  const {dias, grupos, productos, horas} = getFiltered();
+  renderKPIs(dias, 'kpis');
+
+  const labels = dias.map(d=>d.f.slice(0,5));
+
+  // 1) Ventas por día (stacked)
+  destroyChart('c-daily');
+  charts['c-daily'] = new Chart(document.getElementById('c-daily'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Propina',data:dias.map(d=>d.prop),backgroundColor:'#f59e0b',stack:'s'},
+      {label:'Impoconsumo',data:dias.map(d=>d.iva),backgroundColor:'#8b5cf6',stack:'s'},
+      {label:'Venta neta',data:dias.map(d=>d.bruto),backgroundColor:'#0a7c52',stack:'s'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{color:gc},ticks:{font:{size:10},maxRotation:45,autoSkip:labels.length>20}},
+              y:{grid:{color:gc},stacked:true,ticks:{font:{size:10},callback:v=>fmtM(v)}}}}
+  });
+
+  // 2) Medios de pago donut
+  const ef=dias.reduce((a,d)=>a+d.ef,0), dat=dias.reduce((a,d)=>a+d.dat,0), qr=dias.reduce((a,d)=>a+d.qr,0);
+  const tot=ef+dat+qr||1;
+  destroyChart('c-mp-donut');
+  charts['c-mp-donut'] = new Chart(document.getElementById('c-mp-donut'),{
+    type:'doughnut',
+    data:{labels:['Datafono','Efectivo','QR'],datasets:[{data:[dat,ef,qr],backgroundColor:['#1d4ed8','#0a7c52','#d97706'],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:c=>`${c.label}: ${fmtM(c.raw)} (${(c.raw/tot*100).toFixed(1)}%)`}}}}
+  });
+  document.getElementById('mp-legend').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:5px">
+      ${[['Datafono',dat,'#1d4ed8'],['Efectivo',ef,'#0a7c52'],['QR',qr,'#d97706']].map(([l,v,c])=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;font-size:10px">
+          <span style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:2px;background:${c};display:inline-block"></span><span style="color:var(--text3)">${l}</span></span>
+          <span style="color:var(--text2);font-family:'DM Mono',monospace">${(v/tot*100).toFixed(1)}%</span>
+        </div>`).join('')}
+    </div>`;
+
+  // 3) Tendencia
+  destroyChart('c-trend');
+  charts['c-trend'] = new Chart(document.getElementById('c-trend'),{
+    type:'line',
+    data:{labels,datasets:[{label:'Total',data:dias.map(d=>d.tot),borderColor:'#1d4ed8',backgroundColor:'rgba(29,78,216,0.06)',fill:true,tension:.35,pointRadius:3,pointBackgroundColor:'#1d4ed8',borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},
+        tooltip:{callbacks:{
+          title: ctx => {
+            const i=ctx[0].dataIndex;
+            return `${dias[i].d} ${dias[i].f}`;
+          },
+          label: ctx => ` Total: ${fmtM(ctx.raw)}`
+        }}
+      },
+      scales:{x:{grid:{color:gc},ticks:{font:{size:10},autoSkip:true}},y:{grid:{color:gc},ticks:{font:{size:10},callback:v=>fmtM(v)}}}}
+  });
+
+  // 4) Horas
+  destroyChart('c-hora');
+  charts['c-hora'] = new Chart(document.getElementById('c-hora'),{
+    type:'bar',
+    data:{labels:horas.map(([h])=>h+'h'),datasets:[{label:'Ventas',data:horas.map(([,v])=>v),backgroundColor:'#7c3aed',borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{color:gc},ticks:{font:{size:10}}},y:{grid:{color:gc},ticks:{font:{size:10},callback:v=>fmtM(v)}}}}
+  });
+
+  // 5) Grupos horizontal — altura dinámica + etiquetas completas
+  destroyChart('c-grupos');
+  const topGrupos = grupos.slice(0,12);
+  const gruposH = Math.max(260, topGrupos.length * 28 + 40);
+  document.getElementById('c-grupos-wrap').style.height = gruposH + 'px';
+  charts['c-grupos'] = new Chart(document.getElementById('c-grupos'),{
+    type:'bar',
+    data:{labels:topGrupos.map(([n])=>n),datasets:[{label:'$',data:topGrupos.map(([,v])=>v),backgroundColor:'#0f766e',borderRadius:3}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{color:gc},ticks:{font:{size:10},callback:v=>fmtM(v)}},
+        y:{grid:{display:false},ticks:{font:{size:10},maxRotation:0,autoSkip:false},afterFit(axis){axis.width=160;}}
+      }}
+  });
+
+  // 6) Medios por día stacked
+  destroyChart('c-mp-day');
+  charts['c-mp-day'] = new Chart(document.getElementById('c-mp-day'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Datafono',data:dias.map(d=>d.dat),backgroundColor:'#1d4ed8',stack:'s'},
+      {label:'Efectivo',data:dias.map(d=>d.ef),backgroundColor:'#0a7c52',stack:'s'},
+      {label:'QR',data:dias.map(d=>d.qr),backgroundColor:'#d97706',stack:'s'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{color:gc},ticks:{font:{size:10},maxRotation:45,autoSkip:labels.length>20}},
+              y:{grid:{color:gc},stacked:true,ticks:{font:{size:10},callback:v=>fmtM(v)}}}}
+  });
+
+  // 7) Top productos — con unidades
+  const maxV = productos[0]?.[2]||1;
+  document.getElementById('top-prod-bars').innerHTML = productos.map(([n,u,v])=>`
+    <div class="bar-row">
+      <span class="bar-lbl" title="${n}">${n}</span>
+      <div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/maxV*100)}%"></div></div>
+      <span class="bar-val" style="min-width:110px;text-align:right">${fmtM(v)} <span style="color:var(--text3);font-size:9px">${u} platos</span></span>
+    </div>`).join('');
+}
+
+// ── TABLA PAGE ──
+function renderTabla(){
+  const mes = document.getElementById('t-selMes')?.value || document.getElementById('selMes')?.value || 'todos';
+  const dia = document.getElementById('t-selDia')?.value || 'todos';
+
+  let filtered = STORE.meses.filter(m=>{
+    if(mes!=='todos'){const[mm,aa]=mes.split(','); if(String(m.mes)!==mm||String(m.ano)!==aa) return false;}
+    return true;
+  });
+  const dias = filtered.flatMap(m=>m.dias).filter(d=>dia==='todos'||d.d===dia);
+
+  const sum = k => dias.reduce((a,d)=>a+d[k],0);
+  const tbody = document.getElementById('tbody');
+  let rows = '';
+  dias.forEach(d=>{
+    const pill = d.prop>0?`<span class="pill pill-green">+${fmtM(d.prop)}</span>`:'';
+    rows += `<tr>
+      <td style="font-family:'DM Mono',monospace;font-size:11px">${d.f}</td>
+      <td class="day">${d.d}</td>
+      <td class="num">${d.fact}</td>
+      <td class="num">${fmtC(d.bruto)}</td>
+      <td class="num">${fmtC(d.iva)}</td>
+      <td class="num">${d.prop?fmtC(d.prop):'—'}</td>
+      <td class="num">${d.desc?fmtC(d.desc):'—'}</td>
+      <td class="num" style="color:var(--green);font-weight:500">${fmtC(d.tot)}</td>
+      <td class="num">${fmtC(d.ef)}</td>
+      <td class="num">${fmtC(d.dat)}</td>
+      <td class="num">${d.qr?fmtC(d.qr):'—'}</td>
+      <td class="num">${fmtC(Math.round(d.tot/d.fact))}</td>
+    </tr>`;
+  });
+  const tot=sum('tot'),fact=sum('fact');
+  rows += `<tr class="total-row">
+    <td colspan="2">TOTAL</td>
+    <td class="num">${fact}</td>
+    <td class="num">${fmtC(sum('bruto'))}</td>
+    <td class="num">${fmtC(sum('iva'))}</td>
+    <td class="num">${fmtC(sum('prop'))}</td>
+    <td class="num">${fmtC(sum('desc'))}</td>
+    <td class="num">${fmtC(tot)}</td>
+    <td class="num">${fmtC(sum('ef'))}</td>
+    <td class="num">${fmtC(sum('dat'))}</td>
+    <td class="num">${fmtC(sum('qr'))}</td>
+    <td class="num">${fmtC(fact?Math.round(tot/fact):0)}</td>
+  </tr>`;
+  tbody.innerHTML = rows;
+}
+
+// ── COMPARE PAGE ──
+const CMP_COLORS = ['#0a7c52','#6d28d9','#b45309','#1d4ed8','#991b1b'];
+
+function buildMonthChips(){
+  const el = document.getElementById('month-chips');
+  el.innerHTML = STORE.meses.map((m,i)=>`
+    <button class="month-chip mc-${i} ${cmpSelected.includes(i)?'sel':''}" onclick="toggleCmp(${i})">${m.label}</button>
+  `).join('');
+}
+
+function toggleCmp(i){
+  if(cmpSelected.includes(i)){
+    if(cmpSelected.length>1) cmpSelected=cmpSelected.filter(x=>x!==i);
+  } else {
+    if(cmpSelected.length<5) cmpSelected.push(i);
+  }
+  buildMonthChips();
+  renderCompare();
+}
+
+function renderCompare(){
+  buildMonthChips();
+  const sel = cmpSelected.map(i=>STORE.meses[i]).filter(Boolean);
+  if(!sel.length) return;
+
+  const colors = sel.map((_,i)=>CMP_COLORS[i]);
+  const labels = sel.map(m=>m.label);
+
+  // KPIs comparativos
+  const kpiEl = document.getElementById('cmp-kpis');
+  kpiEl.innerHTML = sel.map((m,i)=>{
+    const dias=m.dias, sum=k=>dias.reduce((a,d)=>a+d[k],0);
+    const tot=sum('tot'),fact=sum('fact'),prop=sum('prop');
+    return `<div class="kpi-card">
+      <div class="kpi-label" style="color:${colors[i]}">${m.label}</div>
+      <div class="kpi-val">${fmtM(tot)}</div>
+      <div class="kpi-sub">${dias.length} días · ${fact} facturas</div>
+      <div class="kpi-sub">Ticket ${fmtM(fact?Math.round(tot/fact):0)} · Propina ${fmtM(prop)}</div>
+    </div>`;
+  }).join('');
+
+  // c-cmp-total
+  destroyChart('c-cmp-total');
+  charts['c-cmp-total'] = new Chart(document.getElementById('c-cmp-total'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Venta neta',data:sel.map(m=>m.dias.reduce((a,d)=>a+d.bruto,0)),backgroundColor:colors.map(c=>c+'bb')},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.label}: ${fmtM(c.raw)}`}}},
+      scales:{x:{grid:{color:gc},ticks:{font:{size:11}}},y:{grid:{color:gc},ticks:{font:{size:10},callback:v=>fmtM(v)}}}}
+  });
+
+  // c-cmp-ticket
+  destroyChart('c-cmp-ticket');
+  charts['c-cmp-ticket'] = new Chart(document.getElementById('c-cmp-ticket'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Facturas',data:sel.map(m=>m.dias.reduce((a,d)=>a+d.fact,0)),backgroundColor:colors.map(c=>c+'99'),yAxisID:'y'},
+      {label:'Ticket prom.',data:sel.map(m=>{const d=m.dias,f=d.reduce((a,x)=>a+x.fact,0);return f?Math.round(d.reduce((a,x)=>a+x.tot,0)/f):0}),type:'line',borderColor:'#f59e0b',backgroundColor:'transparent',yAxisID:'y2',tension:.3,pointRadius:5,borderWidth:2},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false}},
+      scales:{
+        x:{grid:{color:gc},ticks:{font:{size:11}}},
+        y:{grid:{color:gc},position:'left',ticks:{font:{size:10}}},
+        y2:{grid:{display:false},position:'right',ticks:{font:{size:10},callback:v=>fmtM(v)}}
+      }}
+  });
+
+  // c-cmp-comp stacked
+  destroyChart('c-cmp-comp');
+  charts['c-cmp-comp'] = new Chart(document.getElementById('c-cmp-comp'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Propina',data:sel.map(m=>m.dias.reduce((a,d)=>a+d.prop,0)),backgroundColor:'#d97706',stack:'s'},
+      {label:'Impoconsumo',data:sel.map(m=>m.dias.reduce((a,d)=>a+d.iva,0)),backgroundColor:'#7c3aed',stack:'s'},
+      {label:'Venta neta',data:sel.map(m=>m.dias.reduce((a,d)=>a+d.bruto,0)),backgroundColor:'#0a7c52',stack:'s'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{color:gc},ticks:{font:{size:11}}},y:{grid:{color:gc},stacked:true,ticks:{font:{size:10},callback:v=>fmtM(v)}}}}
+  });
+
+  // c-cmp-mp
+  destroyChart('c-cmp-mp');
+  charts['c-cmp-mp'] = new Chart(document.getElementById('c-cmp-mp'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Datafono',data:sel.map(m=>m.dias.reduce((a,d)=>a+d.dat,0)),backgroundColor:'#1d4ed8',stack:'s'},
+      {label:'Efectivo',data:sel.map(m=>m.dias.reduce((a,d)=>a+d.ef,0)),backgroundColor:'#0a7c52',stack:'s'},
+      {label:'QR',data:sel.map(m=>m.dias.reduce((a,d)=>a+d.qr,0)),backgroundColor:'#d97706',stack:'s'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{color:gc},ticks:{font:{size:11}}},y:{grid:{color:gc},stacked:true,ticks:{font:{size:10},callback:v=>fmtM(v)}}}}
+  });
+
+  // c-cmp-dow (día de la semana)
+  const DOW = ['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+  destroyChart('c-cmp-dow');
+  charts['c-cmp-dow'] = new Chart(document.getElementById('c-cmp-dow'),{
+    type:'line',
+    data:{
+      labels:DOW,
+      datasets:sel.map((m,i)=>{
+        const byDay={};
+        m.dias.forEach(d=>{if(!byDay[d.d])byDay[d.d]={sum:0,n:0}; byDay[d.d].sum+=d.tot; byDay[d.d].n++;});
+        return {label:m.label,data:DOW.map(dw=>byDay[dw]?Math.round(byDay[dw].sum/byDay[dw].n):null),
+          borderColor:colors[i],backgroundColor:'transparent',tension:.4,pointRadius:5,borderWidth:2,spanGaps:true};
+      })
+    },
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmtM(c.raw)}`}}},
+      scales:{x:{grid:{color:gc},ticks:{font:{size:11}}},y:{grid:{color:gc},ticks:{font:{size:10},callback:v=>fmtM(v)}}}}
+  });
+
+  // ── TOP 15 PRODUCTOS POR MES: tabla comparativa ──
+  renderCmpProductos(sel, colors);
+}
+
+function renderCmpProductos(sel, colors){
+  // Legend
+  const legEl = document.getElementById('cmp-prod-legend');
+  legEl.innerHTML = sel.map((m,i)=>`
+    <span class="legend-item">
+      <span class="legend-dot" style="background:${colors[i]}"></span>${m.label}
+    </span>`).join('');
+
+  // Recolectar todos los productos únicos de los meses seleccionados
+  const allProdsMap = {};
+  sel.forEach(m=>{
+    m.productos.forEach(([name,,v])=>{
+      if(!allProdsMap[name]) allProdsMap[name]=0;
+      allProdsMap[name]+=v;
+    });
+  });
+  // Top 15 por total acumulado
+  const top15 = Object.entries(allProdsMap)
+    .sort((a,b)=>b[1]-a[1])
+    .slice(0,15)
+    .map(([name])=>name);
+
+  // Para cada mes, construir mapa de producto->valor
+  const mesMaps = sel.map(m=>{
+    const mp={};
+    m.productos.forEach(([name,u,v])=>{ mp[name]={u,v}; });
+    return mp;
+  });
+
+  // Valor máximo global entre los top15 para escalar barras
+  const globalMax = Math.max(...top15.map(n=> Math.max(...mesMaps.map(mp=>mp[n]?.v||0))));
+
+  // Construir tabla HTML
+  const colW = Math.floor(560/sel.length);
+  let html = `<table style="width:100%;border-collapse:collapse;font-size:11px;min-width:500px">
+    <thead>
+      <tr>
+        <th style="text-align:left;padding:7px 10px;background:var(--surface2);color:var(--text3);font-size:10px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);width:180px">#&nbsp;&nbsp;Producto</th>
+        ${sel.map((m,i)=>`<th style="text-align:right;padding:7px 10px;background:var(--surface2);color:${colors[i]};font-size:10px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border)">${m.label}</th>`).join('')}
+      </tr>
+    </thead>
+    <tbody>`;
+
+  top15.forEach((name,idx)=>{
+    const rowBg = idx%2===0 ? '' : 'background:var(--surface2)';
+    html += `<tr style="${rowBg}">
+      <td style="padding:6px 10px;color:var(--text);border-bottom:1px solid var(--border)">
+        <span style="color:var(--text3);font-family:'DM Mono',monospace;font-size:10px;margin-right:6px">${String(idx+1).padStart(2,'0')}</span>${name}
+      </td>`;
+
+    sel.forEach((m,mi)=>{
+      const dato = mesMaps[mi][name];
+      const v = dato?.v||0;
+      const u = dato?.u||0;
+      const pct = globalMax>0 ? Math.round(v/globalMax*100) : 0;
+      const isMax = v===Math.max(...mesMaps.map(mp=>mp[name]?.v||0)) && v>0;
+      html += `<td style="padding:6px 10px;text-align:right;border-bottom:1px solid var(--border);vertical-align:middle">
+        ${v>0 ? `
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
+            <span style="font-family:'DM Mono',monospace;font-size:11px;font-weight:${isMax?'600':'400'};color:${isMax?colors[mi]:'var(--text2)'}">${fmtC(v)}</span>
+            <div style="display:flex;align-items:center;gap:5px">
+              <span style="font-size:9px;color:var(--text3)">${u} und</span>
+              <div style="width:60px;height:4px;background:var(--surface3);border-radius:2px;overflow:hidden">
+                <div style="width:${pct}%;height:100%;background:${colors[mi]};border-radius:2px"></div>
+              </div>
+            </div>
+          </div>` : `<span style="color:var(--text3);font-size:11px">—</span>`}
+      </td>`;
+    });
+    html += `</tr>`;
+  });
+
+  html += `</tbody></table>`;
+  document.getElementById('cmp-prod-table').innerHTML = html;
+}
+
+
+// ── POSTRES (reporte especial) ──
+let postresMetric = 'uds', postresSel = 'todos';
+const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function postresKeys(){ return Object.keys(POSTRES).sort(); }
+function postresLabel(k){ const [a,m]=k.split('-').map(Number); const x=STORE.meses.find(s=>s.ano===a&&s.mes===m); return x?x.label:k; }
+function postresAgg(keys){
+  const m={}; let tot=0, ven=0, uds=0;
+  keys.forEach(k=>{ const p=POSTRES[k]; tot+=p.tot; p.items.forEach(([n,u,v])=>{ const r=(m[n]=m[n]||{n,u:0,v:0}); r.u+=u; r.v+=v; ven+=v; uds+=u; }); });
+  return {rows:Object.values(m), tot, ven, uds};
+}
+function setPostresMetric(x){
+  postresMetric=x;
+  document.getElementById('p-m-uds').classList.toggle('on',x==='uds');
+  document.getElementById('p-m-val').classList.toggle('on',x==='val');
+  renderPostres();
+}
+function renderPostres(){
+  const keys=postresKeys(); if(!keys.length) return;
+  const sel=document.getElementById('p-selMes');
+  if(!sel.options.length){
+    sel.innerHTML='<option value="todos">Todos los meses</option>'+keys.slice().reverse().map(k=>`<option value="${k}">${postresLabel(k)}</option>`).join('');
+  }
+  sel.value=postresSel;
+  const use = postresSel==='todos'?keys:[postresSel];
+  const A=postresAgg(use);
+  const key = postresMetric==='uds'?'u':'v';
+  const rows=A.rows.slice().sort((a,b)=>b[key]-a[key]||b.v-a.v);
+  const top=rows[0];
+  const pct=A.tot?A.ven/A.tot*100:0;
+  const card=(l,v,s)=>`<div class="kpi-card" style="--accent-dim:${PALETTE[0]}15"><div class="kpi-label">${l}</div><div class="kpi-val">${v}</div><div class="kpi-sub">${s}</div></div>`;
+  document.getElementById('p-kpis').innerHTML =
+    card('Postres vendidos',A.uds.toLocaleString('es-CO'),'unidades')+
+    card('Venta de postres',fmtM(A.ven),'sin impoconsumo ni propina')+
+    card('% de la venta total',pct.toFixed(1)+'%','sobre el total de líneas de Lazaro')+
+    card('Postre #1',top?esc(top.n):'—',top?`${top.u.toLocaleString('es-CO')} uds · ${fmtM(top.v)}`:'');
+  // ranking
+  document.getElementById('p-rank-title').textContent='Postres más vendidos · '+(postresSel==='todos'?'todos los meses':postresLabel(postresSel))+(postresMetric==='uds'?' (unidades)':' (venta $)');
+  const top15=rows.slice(0,15);
+  destroyChart('c-postres');
+  document.getElementById('c-postres-wrap').style.height=Math.max(260,top15.length*28+40)+'px';
+  charts['c-postres']=new Chart(document.getElementById('c-postres'),{
+    type:'bar',
+    data:{labels:top15.map(r=>r.n),datasets:[{label:postresMetric==='uds'?'Unidades':'$',data:top15.map(r=>r[key]),backgroundColor:'#6d28d9',borderRadius:3}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{color:gc},ticks:{font:{size:10},callback:v=>postresMetric==='uds'?v:fmtM(v)}},
+              y:{grid:{display:false},ticks:{font:{size:10},autoSkip:false,callback:function(v){const t=this.getLabelForValue(v);return t.length>32?t.slice(0,31)+'…':t;}},afterFit(axis){axis.width=200;}}}}
+  });
+  // por mes
+  const por=keys.map(k=>{ const a=postresAgg([k]); return {l:postresLabel(k),ven:a.ven,pct:a.tot?a.ven/a.tot*100:0}; });
+  destroyChart('c-postres-mes');
+  charts['c-postres-mes']=new Chart(document.getElementById('c-postres-mes'),{
+    data:{labels:por.map(x=>x.l),datasets:[
+      {type:'bar',label:'Venta postres',data:por.map(x=>x.ven),backgroundColor:'#6d28d9',borderRadius:3,yAxisID:'y'},
+      {type:'line',label:'% de la venta',data:por.map(x=>+x.pct.toFixed(2)),borderColor:'#d97706',backgroundColor:'#d97706',tension:.25,yAxisID:'y1'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{font:{size:10}}}},
+      scales:{x:{grid:{color:gc},ticks:{font:{size:10}}},
+              y:{grid:{color:gc},ticks:{font:{size:10},callback:v=>fmtM(v)}},
+              y1:{position:'right',grid:{display:false},ticks:{font:{size:10},callback:v=>v+'%'}}}}
+  });
+  // matriz unidades por mes
+  const all=postresAgg(keys).rows.sort((a,b)=>b.v-a.v);
+  const mat=n=>keys.map(k=>{ const it=POSTRES[k].items.find(x=>x[0]===n); return it?it[1]:0; });
+  const totAll=all.reduce((s,r)=>s+r.v,0)||1;
+  let h='<thead><tr><th>Postre</th><th class="num">Uds total</th><th class="num">Venta total</th><th class="num">% postres</th>'+keys.map(k=>`<th class="num">${postresLabel(k)}</th>`).join('')+'</tr></thead><tbody>';
+  all.forEach(r=>{
+    const u=mat(r.n), mx=Math.max(...u,1);
+    h+=`<tr><td>${esc(r.n)}</td><td class="num">${r.u.toLocaleString('es-CO')}</td><td class="num">${fmtM(r.v)}</td><td class="num">${(r.v/totAll*100).toFixed(1)}%</td>`+
+       u.map(x=>`<td class="num" style="background:rgba(109,40,217,${(x/mx*0.28).toFixed(2)})">${x||''}</td>`).join('')+'</tr>';
+  });
+  const colT=keys.map(k=>POSTRES[k].items.reduce((s,x)=>s+x[1],0));
+  h+=`<tr class="total-row"><td>Total</td><td class="num">${colT.reduce((a,b)=>a+b,0).toLocaleString('es-CO')}</td><td class="num">${fmtM(totAll)}</td><td class="num">100%</td>`+colT.map(x=>`<td class="num">${x}</td>`).join('')+'</tr></tbody>';
+  document.getElementById('p-table').innerHTML=h;
+}
+
+
+// ── BEBIDAS (reporte especial) ──
+let bebidasMetric = 'uds', bebidasSel = 'todos', bebidasGrupo = 'todos';
+function bebidasKeys(){ return Object.keys(BEBIDAS).sort(); }
+function bebidasAgg(keys, grupo){
+  const m={}; let tot=0, ven=0, uds=0;
+  keys.forEach(k=>{ const p=BEBIDAS[k]; tot+=p.tot; p.items.forEach(([n,g,u,v])=>{ if(grupo!=='todos'&&g!==grupo) return; const kk=n+'|'+g; const r=(m[kk]=m[kk]||{n,g,u:0,v:0}); r.u+=u; r.v+=v; ven+=v; uds+=u; }); });
+  return {rows:Object.values(m), tot, ven, uds};
+}
+function setBebidasMetric(x){
+  bebidasMetric=x;
+  document.getElementById('b-m-uds').classList.toggle('on',x==='uds');
+  document.getElementById('b-m-val').classList.toggle('on',x==='val');
+  renderBebidas();
+}
+function renderBebidas(){
+  const keys=bebidasKeys(); if(!keys.length) return;
+  const sel=document.getElementById('b-selMes');
+  if(!sel.options.length){
+    sel.innerHTML='<option value="todos">Todos los meses</option>'+keys.slice().reverse().map(k=>`<option value="${k}">${postresLabel(k)}</option>`).join('');
+  }
+  sel.value=bebidasSel;
+  const gs=document.getElementById('b-selGrupo');
+  const grupos=[...new Set(keys.flatMap(k=>BEBIDAS[k].items.map(x=>x[1])))].sort();
+  if(gs.options.length!==grupos.length+1){
+    gs.innerHTML='<option value="todos">Todos los grupos</option>'+grupos.map(g=>`<option value="${esc(g)}">${esc(g)}</option>`).join('');
+  }
+  gs.value=bebidasGrupo;
+  const use = bebidasSel==='todos'?keys:[bebidasSel];
+  const A=bebidasAgg(use,bebidasGrupo);
+  const key = bebidasMetric==='uds'?'u':'v';
+  const rows=A.rows.slice().sort((a,b)=>b[key]-a[key]||b.v-a.v);
+  const top=rows[0];
+  const pct=A.tot?A.ven/A.tot*100:0;
+  const card=(l,v,s)=>`<div class="kpi-card" style="--accent-dim:${PALETTE[0]}15"><div class="kpi-label">${l}</div><div class="kpi-val">${v}</div><div class="kpi-sub">${s}</div></div>`;
+  document.getElementById('b-kpis').innerHTML =
+    card('Bebidas vendidas',A.uds.toLocaleString('es-CO'),'unidades')+
+    card('Venta de bebidas',fmtM(A.ven),'sin impoconsumo ni propina')+
+    card('% de la venta total',pct.toFixed(1)+'%','sobre el total de líneas de Lazaro')+
+    card('Bebida #1',top?esc(top.n):'—',top?`${top.u.toLocaleString('es-CO')} uds · ${fmtM(top.v)}`:'');
+  document.getElementById('b-rank-title').textContent='Bebidas más vendidas · '+(bebidasSel==='todos'?'todos los meses':postresLabel(bebidasSel))+(bebidasGrupo==='todos'?'':' · '+bebidasGrupo)+(bebidasMetric==='uds'?' (unidades)':' (venta $)');
+  const top15=rows.slice(0,15);
+  destroyChart('c-bebidas');
+  document.getElementById('c-bebidas-wrap').style.height=Math.max(260,top15.length*28+40)+'px';
+  charts['c-bebidas']=new Chart(document.getElementById('c-bebidas'),{
+    type:'bar',
+    data:{labels:top15.map(r=>r.n),datasets:[{label:bebidasMetric==='uds'?'Unidades':'$',data:top15.map(r=>r[key]),backgroundColor:'#0e7490',borderRadius:3}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{color:gc},ticks:{font:{size:10},callback:v=>bebidasMetric==='uds'?v:fmtM(v)}},
+              y:{grid:{display:false},ticks:{font:{size:10},autoSkip:false,callback:function(v){const t=this.getLabelForValue(v);return t.length>32?t.slice(0,31)+'…':t;}},afterFit(axis){axis.width=200;}}}}
+  });
+  const por=keys.map(k=>{ const a=bebidasAgg([k],bebidasGrupo); return {l:postresLabel(k),ven:a.ven,pct:a.tot?a.ven/a.tot*100:0}; });
+  destroyChart('c-bebidas-mes');
+  charts['c-bebidas-mes']=new Chart(document.getElementById('c-bebidas-mes'),{
+    data:{labels:por.map(x=>x.l),datasets:[
+      {type:'bar',label:'Venta bebidas',data:por.map(x=>x.ven),backgroundColor:'#0e7490',borderRadius:3,yAxisID:'y'},
+      {type:'line',label:'% de la venta',data:por.map(x=>+x.pct.toFixed(2)),borderColor:'#d97706',backgroundColor:'#d97706',tension:.25,yAxisID:'y1'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{font:{size:10}}}},
+      scales:{x:{grid:{color:gc},ticks:{font:{size:10}}},
+              y:{grid:{color:gc},ticks:{font:{size:10},callback:v=>fmtM(v)}},
+              y1:{position:'right',grid:{display:false},ticks:{font:{size:10},callback:v=>v+'%'}}}}
+  });
+  const all=bebidasAgg(keys,bebidasGrupo).rows.sort((a,b)=>b.v-a.v);
+  const mat=(n,g)=>keys.map(k=>{ const it=BEBIDAS[k].items.find(x=>x[0]===n&&x[1]===g); return it?it[2]:0; });
+  const totAll=all.reduce((s,r)=>s+r.v,0)||1;
+  let h='<thead><tr><th>Bebida</th><th>Grupo</th><th class="num">Uds total</th><th class="num">Venta total</th><th class="num">% bebidas</th>'+keys.map(k=>`<th class="num">${postresLabel(k)}</th>`).join('')+'</tr></thead><tbody>';
+  all.forEach(r=>{
+    const u=mat(r.n,r.g), mx=Math.max(...u,1);
+    h+=`<tr><td>${esc(r.n)}</td><td>${esc(r.g)}</td><td class="num">${r.u.toLocaleString('es-CO')}</td><td class="num">${fmtM(r.v)}</td><td class="num">${(r.v/totAll*100).toFixed(1)}%</td>`+
+       u.map(x=>`<td class="num" style="background:rgba(14,116,144,${(x/mx*0.28).toFixed(2)})">${x||''}</td>`).join('')+'</tr>';
+  });
+  const colT=keys.map(k=>BEBIDAS[k].items.filter(x=>bebidasGrupo==='todos'||x[1]===bebidasGrupo).reduce((s,x)=>s+x[2],0));
+  h+=`<tr class="total-row"><td>Total</td><td></td><td class="num">${colT.reduce((a,b)=>a+b,0).toLocaleString('es-CO')}</td><td class="num">${fmtM(totAll)}</td><td class="num">100%</td>`+colT.map(x=>`<td class="num">${x}</td>`).join('')+'</tr></tbody>';
+  document.getElementById('b-table').innerHTML=h;
+}
+
+// ── IMPORT / EXPORT ──
+function openImport(){ document.getElementById('import-modal').classList.add('open'); }
+function closeImport(){ document.getElementById('import-modal').classList.remove('open'); document.getElementById('import-msg').innerHTML=''; document.getElementById('json-paste').value=''; }
+
+function handleFile(input){
+  const f = input.files[0]; if(!f) return;
+  const r = new FileReader();
+  r.onload = e => { document.getElementById('json-paste').value = e.target.result; };
+  r.readAsText(f);
+}
+
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
+dz.addEventListener('drop',e=>{
+  e.preventDefault(); dz.classList.remove('over');
+  const f=e.dataTransfer.files[0]; if(!f) return;
+  const r=new FileReader(); r.onload=ev=>{document.getElementById('json-paste').value=ev.target.result;}; r.readAsText(f);
+});
+
+function doImport(){
+  const raw = document.getElementById('json-paste').value.trim();
+  const msg = document.getElementById('import-msg');
+  if(!raw){msg.className='msg msg-err';msg.textContent='Pega el JSON o selecciona un archivo.';return;}
+  try{
+    const parsed = JSON.parse(raw);
+    if(!parsed.meses||!Array.isArray(parsed.meses)) throw new Error('Formato inválido. Se esperaba { meses: [...] }');
+    parsed.meses.forEach(m=>{
+      const idx = STORE.meses.findIndex(x=>x.ano===m.ano&&x.mes===m.mes);
+      if(idx>=0) STORE.meses[idx]=m; else STORE.meses.push(m);
+    });
+    STORE.meses.sort((a,b)=>a.ano!==b.ano?a.ano-b.ano:a.mes-b.mes);
+    msg.className='msg msg-ok';
+    msg.textContent=`✓ ${parsed.meses.length} período(s) importado(s) correctamente.`;
+    buildFilters();
+    setTimeout(()=>{ closeImport(); renderGraficas(); },1200);
+  }catch(e){
+    msg.className='msg msg-err';
+    msg.textContent='Error: '+e.message;
+  }
+}
+
+function exportData(){
+  const blob = new Blob([JSON.stringify(STORE,null,2)],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `FamilyGrill_datos_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+
+// ── INIT ──
+buildFilters();
+renderGraficas();
+</script>
+</body>
+</html>
